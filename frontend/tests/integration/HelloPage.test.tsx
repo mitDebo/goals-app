@@ -9,15 +9,25 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+test('shows the Goals heading', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response('hello, goals', { status: 200 })))
+
+  render(<App />)
+
+  expect(screen.getByRole('heading', { level: 1, name: 'Goals' })).toBeInTheDocument()
+  // Let the pending request finish so it doesn't leak into the next test.
+  expect(await screen.findByText('hello, goals')).toBeInTheDocument()
+})
+
 test('shows the message returned by /api/hello', async () => {
-  // Pretend backend: any request answers "hello, world".
-  const fetchMock = vi.fn(async () => new Response('hello, world', { status: 200 }))
+  // Pretend backend: any request answers "hello, goals".
+  const fetchMock = vi.fn(async () => new Response('hello, goals', { status: 200 }))
   vi.stubGlobal('fetch', fetchMock)
 
   render(<App />)
 
   // findByText keeps looking for a short while, because the answer arrives a moment later.
-  expect(await screen.findByText('hello, world')).toBeInTheDocument()
+  expect(await screen.findByText('hello, goals')).toBeInTheDocument()
   expect(fetchMock).toHaveBeenCalledWith('/api/hello')
 })
 

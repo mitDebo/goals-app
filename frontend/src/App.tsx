@@ -32,6 +32,7 @@ function App() {
 
   return (
     <main className="p-6 text-lg">
+      <h1 className="mb-4 text-3xl font-bold">Goals</h1>
       {hello.status === 'loading' && <p>Loading…</p>}
       {hello.status === 'ok' && <p>{hello.message}</p>}
       {hello.status === 'error' && (
