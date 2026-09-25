@@ -32,7 +32,8 @@ function App() {
 
   return (
     <main className="p-6 text-lg">
-      <h1 className="mb-4 text-3xl font-bold">Goals</h1>
+      <h1 className="text-3xl font-bold">Goals</h1>
+      <p className="mb-4 text-muted-foreground">Your week, one box at a time.</p>
       {hello.status === 'loading' && <p>Loading…</p>}
       {hello.status === 'ok' && <p>{hello.message}</p>}
       {hello.status === 'error' && (

@@ -9,12 +9,13 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-test('shows the Goals heading', async () => {
+test('shows the Goals heading and tagline', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => new Response('hello, goals', { status: 200 })))
 
   render(<App />)
 
   expect(screen.getByRole('heading', { level: 1, name: 'Goals' })).toBeInTheDocument()
+  expect(screen.getByText('Your week, one box at a time.')).toBeInTheDocument()
   // Let the pending request finish so it doesn't leak into the next test.
   expect(await screen.findByText('hello, goals')).toBeInTheDocument()
 })
