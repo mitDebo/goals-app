@@ -12,6 +12,13 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  server: {
+    // During local development, pass any /api request on to the backend
+    // (dotnet run on port 5200). In production, nginx does this job instead.
+    proxy: {
+      '/api': 'http://localhost:5200',
+    },
+  },
   test: {
     // Fake browser page for component tests
     environment: 'jsdom',
