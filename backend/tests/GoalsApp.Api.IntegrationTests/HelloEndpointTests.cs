@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 namespace GoalsApp.Api.IntegrationTests;
 
 // Spec: platform-skeleton / "Hello endpoint"
-// GET /api/hello, no auth, returns 200 with the plain-text body "hello, world".
+// GET /api/hello, no auth, returns 200 with the plain-text body "hello, goals".
 public class HelloEndpointTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
@@ -18,6 +18,6 @@ public class HelloEndpointTests(WebApplicationFactory<Program> factory)
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("text/plain", response.Content.Headers.ContentType?.MediaType);
-        Assert.Equal("hello, world", await response.Content.ReadAsStringAsync(ct));
+        Assert.Equal("hello, goals", await response.Content.ReadAsStringAsync(ct));
     }
 }
