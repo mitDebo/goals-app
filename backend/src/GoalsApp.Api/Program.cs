@@ -1,4 +1,15 @@
+using GoalsApp.Api.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Database: connection string "ConnectionStrings:Goals" comes from user-secrets
+// locally and from the GOALS_DB_CONNECTION env var (via docker compose) in production.
+// The migrations history table also lives in the goals schema.
+builder.Services.AddDbContext<GoalsDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("Goals"),
+        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", GoalsDbContext.Schema)));
 
 var app = builder.Build();
 
