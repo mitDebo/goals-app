@@ -1,0 +1,111 @@
+# PR checks: build + test whatever changed. Never deploys, never uses secrets.
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read # paths-filter lists the PR's changed files via the API
+
+# A newer push to the same PR cancels the older, now-pointless run.
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          # A workflow change re-checks both halves.
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/**'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/**'
+
+  backend:
+    name: backend
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore GoalsApp.slnx
+      - run: dotnet build GoalsApp.slnx --configuration Release --no-restore
+      - name: unit tests
+        run: dotnet test tests/GoalsApp.Api.UnitTests --configuration Release --no-build
+      - name: integration tests
+        run: dotnet test tests/GoalsApp.Api.IntegrationTests --configuration Release --no-build
+      # Build (but don't push) the image, so a broken Dockerfile fails the PR, not the deploy.
+      - uses: docker/setup-buildx-action@v4
+      - name: docker build
+        uses: docker/build-push-action@v7
+        with:
+          context: backend
+          platforms: linux/amd64
+          push: false
+
+  frontend:
+    name: frontend
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - name: unit tests
+        run: npm run test:unit
+      - name: integration tests
+        run: npm run test:integration
+      - run: npm run build
+      - uses: docker/setup-buildx-action@v4
+      - name: docker build
+        uses: docker/build-push-action@v7
+        with:
+          context: frontend
+          platforms: linux/amd64
+          push: false
+
+  # The single required check for branch protection. Always runs, and fails if
+  # any job that did run failed or was cancelled (skipped jobs are fine).
+  ci-ok:
+    name: ci-ok
+    needs: [changes, backend, frontend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: all checks passed
+        if: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+        run: echo "All checks that ran passed."
+      - name: a check failed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: |
+          echo "Results: ${{ toJSON(needs.*.result) }}"
+          exit 1
