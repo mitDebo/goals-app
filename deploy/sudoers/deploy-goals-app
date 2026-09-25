@@ -1,0 +1,17 @@
+# /etc/sudoers.d/deploy-goals-app  (mode 0440, owner root:root)
+#
+# Lets the shared `deploy` user (used by GitHub Actions over SSH) pull and
+# restart ONLY goals-app's containers, and nothing else. `deploy` is not in
+# the docker group, since docker-group membership is root-equivalent.
+#
+# Always validate before installing:  sudo visudo -cf <this file>
+
+Cmnd_Alias GOALS_APP_DEPLOY = \
+    /usr/bin/docker compose -f /opt/apps/goals-app/docker-compose.yml pull, \
+    /usr/bin/docker compose -f /opt/apps/goals-app/docker-compose.yml pull backend, \
+    /usr/bin/docker compose -f /opt/apps/goals-app/docker-compose.yml pull frontend, \
+    /usr/bin/docker compose -f /opt/apps/goals-app/docker-compose.yml up -d, \
+    /usr/bin/docker compose -f /opt/apps/goals-app/docker-compose.yml up -d backend, \
+    /usr/bin/docker compose -f /opt/apps/goals-app/docker-compose.yml up -d frontend
+
+deploy ALL=(root) NOPASSWD: GOALS_APP_DEPLOY
