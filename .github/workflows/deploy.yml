@@ -1,0 +1,182 @@
+# Deploy: runs when something is merged (pushed) to main.
+# For each half that changed: test again -> push image to GHCR -> (backend) migrate DB
+# -> then SSH to the droplet and pull + restart only what changed.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write # push images to ghcr.io
+
+# Never run two deploys at once; queue them instead of cancelling mid-deploy.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  # GHCR image names must be lowercase.
+  BACKEND_IMAGE: ghcr.io/mitdebo/goals-app-backend
+  FRONTEND_IMAGE: ghcr.io/mitdebo/goals-app-frontend
+  COMPOSE_FILE: /opt/apps/goals-app/docker-compose.yml
+
+jobs:
+  changes:
+    name: detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # compare against the previous commit on main
+      - id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/**'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/**'
+
+  backend:
+    name: backend (test, push, migrate)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      # Test the merged result again: main must never deploy untested code.
+      - run: dotnet restore GoalsApp.slnx
+      - run: dotnet build GoalsApp.slnx --configuration Release --no-restore
+      - name: unit tests
+        run: dotnet test tests/GoalsApp.Api.UnitTests --configuration Release --no-build
+      - name: integration tests
+        run: dotnet test tests/GoalsApp.Api.IntegrationTests --configuration Release --no-build
+
+      # A migrations bundle is a single executable that applies pending EF migrations.
+      - name: build migrations bundle
+        run: |
+          dotnet tool install --global dotnet-ef --version 10.0.12
+          dotnet ef migrations bundle --project src/GoalsApp.Api --configuration Release --output efbundle --force
+
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: backend
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+            ${{ env.BACKEND_IMAGE }}:latest
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      # Migrations gate the deploy: if this fails, the deploy job never runs.
+      - name: apply database migrations
+        env:
+          GOALS_DB_CONNECTION: ${{ secrets.GOALS_DB_CONNECTION }}
+        run: ./efbundle --connection "$GOALS_DB_CONNECTION"
+
+  frontend:
+    name: frontend (test, push)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - name: unit tests
+        run: npm run test:unit
+      - name: integration tests
+        run: npm run test:integration
+      - run: npm run build
+
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: frontend
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+            ${{ env.FRONTEND_IMAGE }}:latest
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+  deploy:
+    name: deploy to droplet
+    needs: [changes, backend, frontend]
+    # Run if something changed and nothing that ran failed (skipped jobs are fine).
+    if: >-
+      always()
+      && !contains(needs.*.result, 'failure')
+      && !contains(needs.*.result, 'cancelled')
+      && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: set up ssh
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      # Only these exact commands are allowed by /etc/sudoers.d/deploy-goals-app.
+      - name: pull and restart changed services
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          BACKEND_CHANGED: ${{ needs.changes.outputs.backend }}
+          FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
+        run: |
+          if [ "$BACKEND_CHANGED" = "true" ] && [ "$FRONTEND_CHANGED" = "true" ]; then
+            SERVICE=""
+          elif [ "$BACKEND_CHANGED" = "true" ]; then
+            SERVICE="backend"
+          else
+            SERVICE="frontend"
+          fi
+          COMPOSE="sudo /usr/bin/docker compose -f $COMPOSE_FILE"
+          echo "Deploying: ${SERVICE:-backend + frontend}"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "$COMPOSE pull $SERVICE && $COMPOSE up -d $SERVICE"
