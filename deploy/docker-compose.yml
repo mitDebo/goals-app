@@ -1,0 +1,34 @@
+# goals-app on the droplet. Lives at /opt/apps/goals-app/docker-compose.yml,
+# next to a .env file (never committed) that supplies the secrets below.
+#
+# Deploys:   docker compose pull <service> && docker compose up -d <service>
+# Rollback:  BACKEND_TAG=<older-commit-sha> docker compose up -d backend
+
+name: goals-app
+
+# Shared log settings: cap each container's logs so they can't fill the disk.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  backend:
+    image: ghcr.io/mitdebo/goals-app-backend:${BACKEND_TAG:-latest}
+    restart: unless-stopped
+    # Loopback only: reachable from the droplet's own nginx, not the internet.
+    ports:
+      - "127.0.0.1:8110:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # Read by the app as ConnectionStrings:Goals (used from task 4.3 on).
+      ConnectionStrings__Goals: ${GOALS_DB_CONNECTION:?Set GOALS_DB_CONNECTION in .env}
+    logging: *default-logging
+
+  frontend:
+    image: ghcr.io/mitdebo/goals-app-frontend:${FRONTEND_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8111:8080"
+    logging: *default-logging
