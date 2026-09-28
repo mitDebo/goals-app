@@ -8,11 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Database: connection string "ConnectionStrings:Goals" comes from user-secrets
 // locally and from the GOALS_DB_CONNECTION env var (via docker compose) in production.
-// The migrations history table also lives in the goals schema.
 builder.Services.AddDbContext<GoalsDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("Goals"),
-        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", GoalsDbContext.Schema)));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Goals"), GoalsDbContext.ConfigureNpgsql));
 
 // Authentication: validate Supabase access tokens (JWTs).
 // Authority = the Supabase auth issuer; the handler reads its OpenID discovery
