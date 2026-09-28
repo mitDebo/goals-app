@@ -25,5 +25,7 @@ export default defineConfig({
     // Adds DOM matchers like toBeInTheDocument()
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
+    // In GitHub Actions, also report failing tests as PR annotations.
+    reporters: process.env.GITHUB_ACTIONS ? ['default', 'github-actions'] : ['default'],
   },
 })

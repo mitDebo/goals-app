@@ -62,9 +62,9 @@ jobs:
       - run: dotnet restore GoalsApp.slnx
       - run: dotnet build GoalsApp.slnx --configuration Release --no-restore
       - name: unit tests
-        run: dotnet test tests/GoalsApp.Api.UnitTests --configuration Release --no-build
+        run: dotnet test tests/GoalsApp.Api.UnitTests --configuration Release --no-build --logger GitHubActions
       - name: integration tests
-        run: dotnet test tests/GoalsApp.Api.IntegrationTests --configuration Release --no-build
+        run: dotnet test tests/GoalsApp.Api.IntegrationTests --configuration Release --no-build --logger GitHubActions
 
       # A migrations bundle is a single executable that applies pending EF migrations.
       - name: build migrations bundle
