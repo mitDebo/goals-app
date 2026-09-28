@@ -4,7 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -13,19 +12,14 @@ export default defineConfig({
     },
   },
   server: {
-    // During local development, pass any /api request on to the backend
-    // (dotnet run on port 5200). In production, nginx does this job instead.
     proxy: {
       '/api': 'http://localhost:5200',
     },
   },
   test: {
-    // Fake browser page for component tests
     environment: 'jsdom',
-    // Adds DOM matchers like toBeInTheDocument()
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
-    // In GitHub Actions, also report failing tests as PR annotations.
     reporters: process.env.GITHUB_ACTIONS ? ['default', 'github-actions'] : ['default'],
   },
 })
