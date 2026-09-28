@@ -1,4 +1,3 @@
-# PR checks: build + test whatever changed. Never deploys, never uses secrets.
 name: ci
 
 on:
@@ -7,9 +6,8 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read # paths-filter lists the PR's changed files via the API
+  pull-requests: read
 
-# A newer push to the same PR cancels the older, now-pointless run.
 concurrency:
   group: ci-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -26,7 +24,6 @@ jobs:
       - id: filter
         uses: dorny/paths-filter@v4
         with:
-          # A workflow change re-checks both halves.
           filters: |
             backend:
               - 'backend/**'
@@ -54,7 +51,6 @@ jobs:
         run: dotnet test tests/GoalsApp.Api.UnitTests --configuration Release --no-build --logger GitHubActions
       - name: integration tests
         run: dotnet test tests/GoalsApp.Api.IntegrationTests --configuration Release --no-build --logger GitHubActions
-      # Build (but don't push) the image, so a broken Dockerfile fails the PR, not the deploy.
       - uses: docker/setup-buildx-action@v4
       - name: docker build
         uses: docker/build-push-action@v7
@@ -93,8 +89,6 @@ jobs:
           platforms: linux/amd64
           push: false
 
-  # The single required check for branch protection. Always runs, and fails if
-  # any job that did run failed or was cancelled (skipped jobs are fine).
   ci-ok:
     name: ci-ok
     needs: [changes, backend, frontend]
