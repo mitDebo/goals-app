@@ -1,4 +1,3 @@
-# Keep the build context small and free of local build output.
 **/bin/
 **/obj/
 **/TestResults/
