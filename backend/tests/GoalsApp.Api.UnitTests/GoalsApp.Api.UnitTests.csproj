@@ -11,7 +11,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
-    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <!-- xunit.v3 without Microsoft.Testing.Platform, so the VSTest logger below works -->
+    <PackageReference Include="xunit.v3.mtp-off" Version="3.2.2" />
+    <!-- In CI (dotnet test --logger GitHubActions): failing tests become PR annotations -->
+    <PackageReference Include="GitHubActionsTestLogger" Version="3.0.5" PrivateAssets="all" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
   </ItemGroup>
 
