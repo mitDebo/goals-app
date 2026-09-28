@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace GoalsApp.Api.IntegrationTests.Infrastructure;
 
-// Boots the real app in memory, configured to trust only TestJwt's key.
+// Boots the real app in memory against the test database, trusting only TestJwt's key.
 public class GoalsApiFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -15,6 +15,7 @@ public class GoalsApiFactory : WebApplicationFactory<Program>
         // Same settings the app reads in production, pointed at test values.
         builder.UseSetting("Auth:Issuer", TestJwt.Issuer);
         builder.UseSetting("Auth:Audience", TestJwt.Audience);
+        builder.UseSetting("ConnectionStrings:Goals", DatabaseFixture.ConnectionString);
 
         builder.ConfigureTestServices(services =>
         {
