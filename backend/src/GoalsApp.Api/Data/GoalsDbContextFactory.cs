@@ -1,3 +1,4 @@
+using GoalsApp.Api.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -14,6 +15,6 @@ public class GoalsDbContextFactory : IDesignTimeDbContextFactory<GoalsDbContext>
             .UseNpgsql(GoalsDbContext.ConfigureNpgsql)
             .Options;
 
-        return new GoalsDbContext(options);
+        return new GoalsDbContext(options, NoCurrentUser.Instance);
     }
 }

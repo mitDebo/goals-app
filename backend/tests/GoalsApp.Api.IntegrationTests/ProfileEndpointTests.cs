@@ -127,6 +127,19 @@ public class ProfileEndpointTests(GoalsApiFactory factory) : IClassFixture<Goals
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    // Spec: access-control / "Owner-only data access"
+    [Fact]
+    public async Task Each_user_only_ever_gets_their_own_profile()
+    {
+        var alice = SignedInClient();
+        var bob = SignedInClient();
+        await alice.PostAsJsonAsync("/api/me", new { timeZone = "America/Chicago" }, Ct);
+        await bob.PostAsJsonAsync("/api/me", new { timeZone = "Asia/Kolkata" }, Ct);
+
+        Assert.Equal("America/Chicago", (await ReadProfile(await alice.GetAsync("/api/me", Ct)))?.TimeZone);
+        Assert.Equal("Asia/Kolkata", (await ReadProfile(await bob.GetAsync("/api/me", Ct)))?.TimeZone);
+    }
+
     [Fact]
     public async Task Today_comes_from_the_profile_time_zone_not_UTC()
     {
