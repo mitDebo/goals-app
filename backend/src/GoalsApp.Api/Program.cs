@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using GoalsApp.Api.Auth;
 using GoalsApp.Api.Data;
 using GoalsApp.Api.Profiles;
 using GoalsApp.Api.Time;
@@ -8,10 +9,19 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+
 // Database: connection string "ConnectionStrings:Goals" comes from user-secrets
 // locally and from the GOALS_DB_CONNECTION env var (via docker compose) in production.
-builder.Services.AddDbContext<GoalsDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Goals"), GoalsDbContext.ConfigureNpgsql));
+// The interceptor enforces row ownership and fills in timestamps on every save.
+builder.Services.AddScoped<OwnershipInterceptor>();
+builder.Services.AddDbContext<GoalsDbContext>((services, options) =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Goals"), GoalsDbContext.ConfigureNpgsql)
+        .AddInterceptors(services.GetRequiredService<OwnershipInterceptor>()));
+
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<TodayService>();
 
 // Authentication: validate Supabase access tokens (JWTs).
 // Authority = the Supabase auth issuer; the handler reads its OpenID discovery
@@ -35,9 +45,6 @@ builder.Services
 // Every endpoint requires a signed-in user unless it explicitly opts out.
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
-
-builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<TodayService>();
 
 var app = builder.Build();
 

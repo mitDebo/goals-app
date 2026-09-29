@@ -1,8 +1,10 @@
+using GoalsApp.Api.Data;
+
 namespace GoalsApp.Api.Profiles;
 
 // App-owned profile, keyed by the auth provider's user id. No foreign key to
 // Supabase's auth tables, so auth stays swappable.
-public class Profile
+public class Profile : IOwnedEntity, ITimestamped
 {
     public Guid UserId { get; set; }
     public required string TimeZone { get; set; }

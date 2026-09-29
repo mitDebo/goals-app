@@ -1,3 +1,4 @@
+using GoalsApp.Api.Auth;
 using GoalsApp.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
@@ -24,10 +25,16 @@ public sealed class DatabaseFixture : IAsyncLifetime
         await db.Database.MigrateAsync();
     }
 
-    public static GoalsDbContext CreateDbContext() =>
-        new(new DbContextOptionsBuilder<GoalsDbContext>()
+    // A context acting as the given user (or as nobody), wired like the app's.
+    public static GoalsDbContext CreateDbContext(ICurrentUser? currentUser = null, TimeProvider? clock = null)
+    {
+        var user = currentUser ?? NoCurrentUser.Instance;
+        var options = new DbContextOptionsBuilder<GoalsDbContext>()
             .UseNpgsql(ConnectionString, GoalsDbContext.ConfigureNpgsql)
-            .Options);
+            .AddInterceptors(new OwnershipInterceptor(user, clock ?? TimeProvider.System))
+            .Options;
+        return new GoalsDbContext(options, user);
+    }
 
     public async ValueTask DisposeAsync() => await _container.DisposeAsync();
 }
