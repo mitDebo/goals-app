@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using GoalsApp.Api.Data;
+using GoalsApp.Api.Profiles;
+using GoalsApp.Api.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +36,9 @@ builder.Services
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<TodayService>();
+
 var app = builder.Build();
 
 app.UseAuthentication();
@@ -46,6 +51,8 @@ app.MapGet("/api/hello", () => "hello, goals").AllowAnonymous();
 // Smallest protected endpoint: echoes the signed-in user's id (the token's "sub").
 app.MapGet("/api/whoami", (ClaimsPrincipal user) =>
     Results.Ok(new { userId = user.FindFirstValue("sub") }));
+
+app.MapProfileEndpoints();
 
 app.Run();
 

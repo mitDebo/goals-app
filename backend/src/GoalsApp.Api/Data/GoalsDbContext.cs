@@ -1,9 +1,9 @@
+using GoalsApp.Api.Profiles;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
 namespace GoalsApp.Api.Data;
 
-// The app's EF Core context. No tables yet; entities arrive in later changes.
 public class GoalsDbContext(DbContextOptions<GoalsDbContext> options) : DbContext(options)
 {
     // Every goals-app table lives in this Postgres schema (shared Supabase project).
@@ -13,8 +13,11 @@ public class GoalsDbContext(DbContextOptions<GoalsDbContext> options) : DbContex
     public static void ConfigureNpgsql(NpgsqlDbContextOptionsBuilder npgsql) =>
         npgsql.MigrationsHistoryTable("__EFMigrationsHistory", Schema);
 
+    public DbSet<Profile> Profiles => Set<Profile>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schema);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(GoalsDbContext).Assembly);
     }
 }
