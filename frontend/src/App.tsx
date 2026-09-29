@@ -1,47 +1,33 @@
-import { useEffect, useState } from 'react'
+import { BrowserRouter, Route, Routes } from 'react-router'
+import { AuthProvider } from '@/auth/AuthProvider'
+import { useAuth } from '@/auth/context'
+import { ApiStatus } from '@/components/ApiStatus'
+import { AuthCallbackPage } from '@/pages/AuthCallbackPage'
+import { HomePage } from '@/pages/HomePage'
+import { SignInPage } from '@/pages/SignInPage'
 
-// Walking-skeleton page: asks the backend for its hello message and shows it.
-type HelloState =
-  | { status: 'loading' }
-  | { status: 'ok'; message: string }
-  | { status: 'error' }
+// Signed in: the app. Signed out: the front door.
+function Guarded() {
+  const { session, loading } = useAuth()
+  if (loading) return <p>Loading…</p>
+  return session ? <HomePage session={session} /> : <SignInPage />
+}
 
 function App() {
-  const [hello, setHello] = useState<HelloState>({ status: 'loading' })
-
-  useEffect(() => {
-    // If the page goes away before the answer arrives, ignore the answer.
-    let ignore = false
-
-    async function loadHello() {
-      try {
-        const response = await fetch('/api/hello')
-        if (!response.ok) throw new Error(`Server answered ${response.status}`)
-        const message = await response.text()
-        if (!ignore) setHello({ status: 'ok', message })
-      } catch {
-        if (!ignore) setHello({ status: 'error' })
-      }
-    }
-
-    loadHello()
-    return () => {
-      ignore = true
-    }
-  }, [])
-
   return (
-    <main className="p-6 text-lg">
-      <h1 className="text-3xl font-bold">Goals</h1>
-      <p className="mb-4 text-muted-foreground">Your week, one box at a time.</p>
-      {hello.status === 'loading' && <p>Loading…</p>}
-      {hello.status === 'ok' && <p>{hello.message}</p>}
-      {hello.status === 'error' && (
-        <p role="alert" className="text-destructive">
-          Couldn't reach the server. Please try again later.
-        </p>
-      )}
-    </main>
+    <AuthProvider>
+      <BrowserRouter>
+        <main className="p-6 text-lg">
+          <h1 className="text-3xl font-bold">Goals</h1>
+          <p className="mb-6 text-muted-foreground">Your week, one box at a time.</p>
+          <Routes>
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route path="*" element={<Guarded />} />
+          </Routes>
+          <ApiStatus />
+        </main>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 

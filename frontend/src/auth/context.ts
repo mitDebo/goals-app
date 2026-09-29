@@ -1,0 +1,10 @@
+import { createContext, useContext } from 'react'
+import type { Session } from '@supabase/supabase-js'
+
+export type AuthState = { session: Session | null; loading: boolean }
+
+export const AuthContext = createContext<AuthState>({ session: null, loading: true })
+
+export const useAuth = () => useContext(AuthContext)
+
+export const authCallbackUrl = () => `${window.location.origin}/auth/callback`
