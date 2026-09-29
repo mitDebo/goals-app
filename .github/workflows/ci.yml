@@ -46,10 +46,12 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet restore GoalsApp.slnx
-      - run: dotnet build GoalsApp.slnx --configuration Release --no-restore
+      - id: build
+        run: dotnet build GoalsApp.slnx --configuration Release --no-restore
       - name: unit tests
         run: dotnet test tests/GoalsApp.Api.UnitTests --configuration Release --no-build --logger GitHubActions
       - name: integration tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: dotnet test tests/GoalsApp.Api.IntegrationTests --configuration Release --no-build --logger GitHubActions
       - uses: docker/setup-buildx-action@v4
       - name: docker build
@@ -74,11 +76,13 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
+      - id: install
+        run: npm ci
       - run: npm run lint
       - name: unit tests
         run: npm run test:unit
       - name: integration tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run test:integration
       - run: npm run build
       - uses: docker/setup-buildx-action@v4
