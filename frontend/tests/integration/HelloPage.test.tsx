@@ -1,9 +1,21 @@
 import { render, screen } from '@testing-library/react'
-import { afterEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import App from '@/App'
+import { fakeAuth } from '../helpers/fakeAuth'
 
 // Spec: platform-skeleton / "SPA displays the hello message"
 // On load, the page asks the backend (/api/hello) and shows what it says.
+
+// The status line shows on every page, so these tests use a signed-out visitor.
+vi.mock('@/auth/supabase', async () => {
+  const { fakeAuth } = await import('../helpers/fakeAuth')
+  return { supabase: { auth: fakeAuth.auth } }
+})
+
+beforeEach(() => {
+  fakeAuth.reset(null)
+  window.history.replaceState({}, '', '/')
+})
 
 afterEach(() => {
   vi.unstubAllGlobals()
