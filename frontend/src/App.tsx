@@ -4,13 +4,20 @@ import { useAuth } from '@/auth/context'
 import { ApiStatus } from '@/components/ApiStatus'
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage'
 import { HomePage } from '@/pages/HomePage'
+import { SettingsPage } from '@/pages/SettingsPage'
 import { SignInPage } from '@/pages/SignInPage'
 
 // Signed in: the app. Signed out: the front door.
 function Guarded() {
   const { session, loading } = useAuth()
   if (loading) return <p>Loading…</p>
-  return session ? <HomePage session={session} /> : <SignInPage />
+  if (!session) return <SignInPage />
+  return (
+    <Routes>
+      <Route path="/settings" element={<SettingsPage session={session} />} />
+      <Route path="*" element={<HomePage session={session} />} />
+    </Routes>
+  )
 }
 
 function App() {
