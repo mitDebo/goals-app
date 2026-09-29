@@ -31,7 +31,7 @@ public static class ProfileEndpoints
     // Idempotent: creates the profile on first sign-in, otherwise returns it unchanged.
     private static async Task<IResult> CreateProfile(
         CreateProfileRequest request, ClaimsPrincipal user, GoalsDbContext db,
-        TodayService today, TimeProvider clock, CancellationToken ct)
+        TodayService today, CancellationToken ct)
     {
         if (!IanaTimeZone.IsValid(request.TimeZone))
             return InvalidTimeZone();
@@ -40,14 +40,11 @@ public static class ProfileEndpoints
         if (existing is not null)
             return Results.Ok(ToResponse(existing, today));
 
-        var now = clock.GetUtcNow();
         var profile = new Profile
         {
             UserId = user.GetUserId(),
             TimeZone = request.TimeZone!,
             WeekStart = WeekStart.Sunday,
-            CreatedAt = now,
-            UpdatedAt = now,
         };
         db.Profiles.Add(profile);
         await db.SaveChangesAsync(ct);
@@ -58,7 +55,7 @@ public static class ProfileEndpoints
     // Partial update: only fields present in the request change.
     private static async Task<IResult> UpdateProfile(
         UpdateProfileRequest request, ClaimsPrincipal user, GoalsDbContext db,
-        TodayService today, TimeProvider clock, CancellationToken ct)
+        TodayService today, CancellationToken ct)
     {
         var profile = await db.Profiles.FindAsync([user.GetUserId()], ct);
         if (profile is null)
@@ -76,7 +73,6 @@ public static class ProfileEndpoints
 
         profile.TimeZone = request.TimeZone ?? profile.TimeZone;
         profile.WeekStart = weekStart;
-        profile.UpdatedAt = clock.GetUtcNow();
         await db.SaveChangesAsync(ct);
 
         return Results.Ok(ToResponse(profile, today));
