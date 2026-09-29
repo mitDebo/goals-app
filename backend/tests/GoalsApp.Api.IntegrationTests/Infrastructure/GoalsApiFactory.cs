@@ -14,7 +14,8 @@ namespace GoalsApp.Api.IntegrationTests.Infrastructure;
 public class GoalsApiFactory : WebApplicationFactory<Program>
 {
     // Controls what "today" is for the app, without touching the clock used for token expiry.
-    public FakeTimeProvider TodayClock { get; } = new(DateTimeOffset.UtcNow);
+    // Starts early so tests can move it forward to any date they need.
+    public FakeTimeProvider TodayClock { get; } = new(new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero));
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
