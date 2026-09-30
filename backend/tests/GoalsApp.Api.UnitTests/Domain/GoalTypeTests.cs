@@ -1,3 +1,4 @@
+using GoalsApp.Api.Core.Enums;
 using GoalsApp.Api.Domain;
 
 namespace GoalsApp.Api.UnitTests.Domain;
@@ -12,7 +13,7 @@ public class GoalTypeTests
     public void Names_round_trip(GoalType type, string name)
     {
         Assert.Equal(name, type.ToName());
-        Assert.True(GoalTypeNames.TryParse(name, out var parsed));
+        Assert.True(EnumNames.TryParse<GoalType>(name, out var parsed));
         Assert.Equal(type, parsed);
     }
 
@@ -23,6 +24,6 @@ public class GoalTypeTests
     [InlineData("Boolean")]
     public void Unknown_names_are_rejected(string? name)
     {
-        Assert.False(GoalTypeNames.TryParse(name, out _));
+        Assert.False(EnumNames.TryParse<GoalType>(name, out _));
     }
 }

@@ -1,3 +1,4 @@
+using GoalsApp.Api.Core.Enums;
 using GoalsApp.Api.Domain;
 
 namespace GoalsApp.Api.UnitTests.Domain;
@@ -10,7 +11,7 @@ public class TargetComparisonTests
     public void Names_round_trip(TargetComparison comparison, string name)
     {
         Assert.Equal(name, comparison.ToName());
-        Assert.True(TargetComparisonNames.TryParse(name, out var parsed));
+        Assert.True(EnumNames.TryParse<TargetComparison>(name, out var parsed));
         Assert.Equal(comparison, parsed);
     }
 
@@ -20,6 +21,6 @@ public class TargetComparisonTests
     [InlineData("AtLeast")]
     public void Unknown_names_are_rejected(string? name)
     {
-        Assert.False(TargetComparisonNames.TryParse(name, out _));
+        Assert.False(EnumNames.TryParse<TargetComparison>(name, out _));
     }
 }

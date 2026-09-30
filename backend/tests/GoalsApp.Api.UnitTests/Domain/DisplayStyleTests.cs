@@ -1,3 +1,4 @@
+using GoalsApp.Api.Core.Enums;
 using GoalsApp.Api.Domain;
 
 namespace GoalsApp.Api.UnitTests.Domain;
@@ -16,7 +17,7 @@ public class DisplayStyleTests
     public void Names_round_trip(DisplayStyle style, string name)
     {
         Assert.Equal(name, style.ToName());
-        Assert.True(DisplayStyleNames.TryParse(name, out var parsed));
+        Assert.True(EnumNames.TryParse<DisplayStyle>(name, out var parsed));
         Assert.Equal(style, parsed);
     }
 
@@ -26,6 +27,6 @@ public class DisplayStyleTests
     [InlineData("emojiScale")]
     public void Unknown_names_are_rejected(string? name)
     {
-        Assert.False(DisplayStyleNames.TryParse(name, out _));
+        Assert.False(EnumNames.TryParse<DisplayStyle>(name, out _));
     }
 }
