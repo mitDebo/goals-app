@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using GoalsApp.Api.Core.Auth;
-using GoalsApp.Api.Core.Results;
+using GoalsApp.Api.Core.Outcomes;
 using GoalsApp.Api.Core.Time;
 using GoalsApp.Api.Data.Entities;
 using GoalsApp.Api.Services;
@@ -25,16 +25,16 @@ public static class ProfileEndpoints
     private static async Task<IResult> GetProfile(
         ClaimsPrincipal user, ProfileService profiles, Clock clock, CancellationToken ct)
     {
-        var result = await profiles.GetAsync(user.GetUserId(), ct);
-        return result.ToHttp(profile => Results.Ok(ToResponse(profile, clock)));
+        var outcome = await profiles.GetAsync(user.GetUserId(), ct);
+        return outcome.ToHttp(profile => Results.Ok(ToResponse(profile, clock)));
     }
 
     // 201 when this call created the profile, 200 when it already existed.
     private static async Task<IResult> CreateProfile(
         CreateProfileRequest request, ClaimsPrincipal user, ProfileService profiles, Clock clock, CancellationToken ct)
     {
-        var result = await profiles.EnsureAsync(user.GetUserId(), request.TimeZone, ct);
-        return result.ToHttp(ensured => ensured.Created
+        var outcome = await profiles.EnsureAsync(user.GetUserId(), request.TimeZone, ct);
+        return outcome.ToHttp(ensured => ensured.Created
             ? Results.Created("/api/me", ToResponse(ensured.Profile, clock))
             : Results.Ok(ToResponse(ensured.Profile, clock)));
     }
@@ -42,8 +42,8 @@ public static class ProfileEndpoints
     private static async Task<IResult> UpdateProfile(
         UpdateProfileRequest request, ClaimsPrincipal user, ProfileService profiles, Clock clock, CancellationToken ct)
     {
-        var result = await profiles.UpdateAsync(user.GetUserId(), request.TimeZone, request.WeekStart, ct);
-        return result.ToHttp(profile => Results.Ok(ToResponse(profile, clock)));
+        var outcome = await profiles.UpdateAsync(user.GetUserId(), request.TimeZone, request.WeekStart, ct);
+        return outcome.ToHttp(profile => Results.Ok(ToResponse(profile, clock)));
     }
 
     private static ProfileResponse ToResponse(Profile profile, Clock clock) =>

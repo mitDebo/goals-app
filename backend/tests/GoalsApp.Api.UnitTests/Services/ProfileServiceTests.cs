@@ -1,4 +1,4 @@
-using GoalsApp.Api.Core.Results;
+using GoalsApp.Api.Core.Outcomes;
 using GoalsApp.Api.Core.Time;
 using GoalsApp.Api.Data.Entities;
 using GoalsApp.Api.Services;
@@ -21,9 +21,9 @@ public class ProfileServiceTests
         var profile = Existing();
         var service = new ProfileService(new FakeProfileRepository().With(profile));
 
-        var result = await service.GetAsync(UserId, Ct);
+        var outcome = await service.GetAsync(UserId, Ct);
 
-        Assert.Same(profile, result.Value);
+        Assert.Same(profile, outcome.Value);
     }
 
     [Fact]
@@ -31,9 +31,9 @@ public class ProfileServiceTests
     {
         var service = new ProfileService(new FakeProfileRepository());
 
-        var result = await service.GetAsync(UserId, Ct);
+        var outcome = await service.GetAsync(UserId, Ct);
 
-        Assert.Equal(ResultStatus.NotFound, result.Status);
+        Assert.Equal(OutcomeStatus.NotFound, outcome.Status);
     }
 
     [Fact]
@@ -42,9 +42,9 @@ public class ProfileServiceTests
         var repository = new FakeProfileRepository();
         var service = new ProfileService(repository);
 
-        var result = await service.EnsureAsync(UserId, "America/Chicago", Ct);
+        var outcome = await service.EnsureAsync(UserId, "America/Chicago", Ct);
 
-        Assert.True(result.Value.Created);
+        Assert.True(outcome.Value.Created);
         var saved = Assert.Single(repository.Added);
         Assert.Equal(UserId, saved.UserId);
         Assert.Equal("America/Chicago", saved.TimeZone);
@@ -59,10 +59,10 @@ public class ProfileServiceTests
         var repository = new FakeProfileRepository().With(profile);
         var service = new ProfileService(repository);
 
-        var result = await service.EnsureAsync(UserId, "America/Chicago", Ct);
+        var outcome = await service.EnsureAsync(UserId, "America/Chicago", Ct);
 
-        Assert.False(result.Value.Created);
-        Assert.Same(profile, result.Value.Profile);
+        Assert.False(outcome.Value.Created);
+        Assert.Same(profile, outcome.Value.Profile);
         Assert.Equal("Europe/London", profile.TimeZone);
         Assert.Empty(repository.Added);
         Assert.Equal(0, repository.SaveCount);
@@ -78,10 +78,10 @@ public class ProfileServiceTests
         var repository = new FakeProfileRepository();
         var service = new ProfileService(repository);
 
-        var result = await service.EnsureAsync(UserId, timeZone, Ct);
+        var outcome = await service.EnsureAsync(UserId, timeZone, Ct);
 
-        Assert.Equal(ResultStatus.Invalid, result.Status);
-        Assert.Contains("timeZone", result.Errors.Keys);
+        Assert.Equal(OutcomeStatus.Invalid, outcome.Status);
+        Assert.Contains("timeZone", outcome.Errors.Keys);
         Assert.Equal(0, repository.SaveCount);
     }
 
@@ -108,9 +108,9 @@ public class ProfileServiceTests
     {
         var service = new ProfileService(new FakeProfileRepository());
 
-        var result = await service.UpdateAsync(UserId, "Europe/London", null, Ct);
+        var outcome = await service.UpdateAsync(UserId, "Europe/London", null, Ct);
 
-        Assert.Equal(ResultStatus.NotFound, result.Status);
+        Assert.Equal(OutcomeStatus.NotFound, outcome.Status);
     }
 
     [Fact]
@@ -120,10 +120,10 @@ public class ProfileServiceTests
         var repository = new FakeProfileRepository().With(profile);
         var service = new ProfileService(repository);
 
-        var result = await service.UpdateAsync(UserId, "Mars/Olympus", "sunday", Ct);
+        var outcome = await service.UpdateAsync(UserId, "Mars/Olympus", "sunday", Ct);
 
-        Assert.Equal(ResultStatus.Invalid, result.Status);
-        Assert.Contains("timeZone", result.Errors.Keys);
+        Assert.Equal(OutcomeStatus.Invalid, outcome.Status);
+        Assert.Contains("timeZone", outcome.Errors.Keys);
         Assert.Equal("America/Chicago", profile.TimeZone);
         Assert.Equal(WeekStart.Monday, profile.WeekStart);
         Assert.Equal(0, repository.SaveCount);
@@ -136,10 +136,10 @@ public class ProfileServiceTests
         var repository = new FakeProfileRepository().With(profile);
         var service = new ProfileService(repository);
 
-        var result = await service.UpdateAsync(UserId, "Europe/London", "wednesday", Ct);
+        var outcome = await service.UpdateAsync(UserId, "Europe/London", "wednesday", Ct);
 
-        Assert.Equal(ResultStatus.Invalid, result.Status);
-        Assert.Contains("weekStart", result.Errors.Keys);
+        Assert.Equal(OutcomeStatus.Invalid, outcome.Status);
+        Assert.Contains("weekStart", outcome.Errors.Keys);
         Assert.Equal("America/Chicago", profile.TimeZone);
         Assert.Equal(0, repository.SaveCount);
     }

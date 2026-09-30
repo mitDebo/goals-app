@@ -10,7 +10,7 @@ GoalsApp.Api/
   Core/                   cross-cutting helpers any layer may use
     Auth/                 current user, claims helpers
     Extensions/           service registration (AddGoalsCore, AddGoalsData, AddGoalsAuth, AddGoalsServices)
-    Results/              Result<T> and its ToHttp mapping
+    Outcomes/             Outcome<T> and its ToHttp mapping
     Time/                 Clock ("today" in a time zone), IanaTimeZone, WeekStart
   Data/                   everything EF
     GoalsDbContext.cs, GoalsDbContextFactory.cs
@@ -38,7 +38,7 @@ also share a file (`Core/Auth/CurrentUser.cs` holds `ICurrentUser` and its imple
   and turn the outcome into an HTTP response. Request/response records live nested inside the
   endpoints class and never leave the HTTP layer.
 - **Services** hold the rules (validation, "create only if missing", and so on). They take plain
-  values, use repositories, and return `Result<T>`.
+  values, use repositories, and return `Outcome<T>`.
 - **Repositories** find, add and save entities through `GoalsDbContext`. No business rules.
 - **Data** holds the model. Owner-only access and timestamps are enforced here for every table,
   whatever the layers above do; see [access-control.md](access-control.md).
@@ -46,16 +46,16 @@ also share a file (`Core/Auth/CurrentUser.cs` holds `ICurrentUser` and its imple
 `Core` is for helpers that belong to no single feature, even when they are registered with
 dependency injection (e.g. `Clock`). Feature logic goes in `Services`, even when it is small.
 
-## Reporting outcomes: `Result<T>`
+## Reporting outcomes: `Outcome<T>`
 
-Services return `Result<T>` for ordinary outcomes: success, not found, or validation errors.
+Services return `Outcome<T>` for ordinary outcomes: success, not found, or validation errors.
 Exceptions are for bugs and broken invariants only (e.g. `OwnershipViolationException`).
 
-Endpoints usually map a result with the shared helper, which turns not found into 404 and
+Endpoints usually map an outcome with the shared helper, which turns not found into 404 and
 validation errors into a 400 validation problem:
 
 ```csharp
-return result.ToHttp(profile => Results.Ok(ToResponse(profile)));
+return outcome.ToHttp(profile => Results.Ok(ToResponse(profile)));
 ```
 
 An endpoint that needs something special (e.g. 201 vs 200) handles the success cases itself
