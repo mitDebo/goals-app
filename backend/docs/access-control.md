@@ -7,22 +7,22 @@ so endpoints never need to remember it.
 
 1. Make the entity implement **`IOwnedEntity`** (`Guid UserId`) if its rows belong
    to a user, and **`ITimestamped`** (`CreatedAt`, `UpdatedAt`) if it should carry
-   timestamps. Store `UserId` on the table itself, even when ownership could be
+   timestamps. Both live in `Data/Abstractions/`. Store `UserId` on the table itself, even when ownership could be
    worked out through a parent row, so the filter stays simple.
 2. That's it. You get:
-   - **Query filter** (`GoalsDbContext`): every query on the table only returns the
+   - **Query filter** (`Data/GoalsDbContext.cs`): every query on the table only returns the
      current user's rows, and none when nobody is signed in. A lookup by id for
      someone else's row finds nothing, so endpoints naturally answer 404.
-   - **Save rules** (`OwnershipInterceptor`, on every `SaveChanges`):
+   - **Save rules** (`Data/Interceptors/OwnershipInterceptor.cs`, on every `SaveChanges`):
      - new rows with an empty `UserId` are stamped with the current user;
      - saving a row owned by anyone else, or any owned row while nobody is
-       signed in, throws `OwnershipViolationException`;
+       signed in, throws `OwnershipInterceptor.OwnershipViolationException`;
      - `CreatedAt`/`UpdatedAt` are set on insert, `UpdatedAt` on update, and
        `CreatedAt` can never be changed afterwards.
 
 ## Where the current user comes from
 
-`ICurrentUser` — in the API it is `HttpCurrentUser` (the token's `sub` claim);
+`ICurrentUser` (`Core/Auth/`) — in the API it is `HttpCurrentUser` (the token's `sub` claim);
 EF's design-time tools use `NoCurrentUser`. Tests use `TestCurrentUser` and
 `DatabaseFixture.CreateDbContext(user, clock)` to act as any user.
 

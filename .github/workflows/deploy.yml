@@ -174,3 +174,14 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "$COMPOSE pull $SERVICE && $COMPOSE up -d $SERVICE"
+
+      - name: check the live site is healthy
+        run: |
+          for attempt in $(seq 1 12); do
+            status=$(curl -s -o /dev/null -w '%{http_code}' https://goals.kdubs.tech/api/health || true)
+            echo "attempt $attempt: $status"
+            if [ "$status" = "200" ]; then exit 0; fi
+            sleep 5
+          done
+          echo "::error::https://goals.kdubs.tech/api/health did not return 200"
+          exit 1

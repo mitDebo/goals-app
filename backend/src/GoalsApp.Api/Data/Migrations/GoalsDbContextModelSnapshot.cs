@@ -23,7 +23,7 @@ namespace GoalsApp.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("GoalsApp.Api.Profiles.Profile", b =>
+            modelBuilder.Entity("GoalsApp.Api.Data.Entities.Profile", b =>
                 {
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")

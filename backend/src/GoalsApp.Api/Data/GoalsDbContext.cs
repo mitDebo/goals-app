@@ -1,6 +1,7 @@
 using System.Reflection;
-using GoalsApp.Api.Auth;
-using GoalsApp.Api.Profiles;
+using GoalsApp.Api.Core.Auth;
+using GoalsApp.Api.Data.Abstractions;
+using GoalsApp.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
 
