@@ -6,12 +6,17 @@ export type Profile = { timeZone: string; weekStart: WeekStart; today: string }
 export const browserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone
 
 // Creates the profile on first visit; returns the existing one otherwise.
+// Returns null if it couldn't be done (server error or no connection).
 export async function ensureProfile(token: string): Promise<Profile | null> {
-  const res = await apiFetch('/api/me', token, {
-    method: 'POST',
-    body: JSON.stringify({ timeZone: browserTimeZone() }),
-  })
-  return res.ok ? ((await res.json()) as Profile) : null
+  try {
+    const res = await apiFetch('/api/me', token, {
+      method: 'POST',
+      body: JSON.stringify({ timeZone: browserTimeZone() }),
+    })
+    return res.ok ? ((await res.json()) as Profile) : null
+  } catch {
+    return null
+  }
 }
 
 export async function getProfile(token: string): Promise<Profile | null> {

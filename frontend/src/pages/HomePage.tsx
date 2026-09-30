@@ -10,6 +10,7 @@ import { browserTimeZone, ensureProfile, updateProfile } from '@/profile/api'
 export function HomePage({ session }: { session: Session }) {
   const profileEnsuredFor = useRef<string | null>(null)
   const [savedTimeZone, setSavedTimeZone] = useState<string | null>(null)
+  const [profileFailed, setProfileFailed] = useState(false)
   const browserZone = browserTimeZone()
 
   useEffect(() => {
@@ -17,7 +18,8 @@ export function HomePage({ session }: { session: Session }) {
     profileEnsuredFor.current = session.access_token
 
     ensureProfile(session.access_token).then((profile) => {
-      if (profile && profile.timeZone !== browserZone) setSavedTimeZone(profile.timeZone)
+      if (!profile) setProfileFailed(true)
+      else if (profile.timeZone !== browserZone) setSavedTimeZone(profile.timeZone)
     })
   }, [session.access_token, browserZone])
 
@@ -28,6 +30,11 @@ export function HomePage({ session }: { session: Session }) {
 
   return (
     <section className="flex flex-col items-start gap-3">
+      {profileFailed && (
+        <p role="alert" className="text-destructive">
+          We couldn't load your profile. Try refreshing the page.
+        </p>
+      )}
       {savedTimeZone && (
         <div className="flex flex-col gap-2 rounded-md border p-3">
           <p>
@@ -42,6 +49,9 @@ export function HomePage({ session }: { session: Session }) {
         </div>
       )}
       <p>Signed in{session.user.email ? ` as ${session.user.email}` : ''}.</p>
+      <Link to="/goals" className="underline">
+        Goals
+      </Link>
       <Link to="/settings" className="underline">
         Settings
       </Link>

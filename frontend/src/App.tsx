@@ -3,6 +3,7 @@ import { AuthProvider } from '@/auth/AuthProvider'
 import { useAuth } from '@/auth/context'
 import { ApiStatus } from '@/components/ApiStatus'
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage'
+import { GoalsPage } from '@/pages/GoalsPage'
 import { HomePage } from '@/pages/HomePage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SignInPage } from '@/pages/SignInPage'
@@ -14,6 +15,7 @@ function Guarded() {
   if (!session) return <SignInPage />
   return (
     <Routes>
+      <Route path="/goals" element={<GoalsPage session={session} />} />
       <Route path="/settings" element={<SettingsPage session={session} />} />
       <Route path="*" element={<HomePage session={session} />} />
     </Routes>
