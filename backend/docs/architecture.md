@@ -12,6 +12,7 @@ GoalsApp.Api/
     Extensions/           service registration (AddGoalsCore, AddGoalsData, AddGoalsAuth, AddGoalsServices)
     Outcomes/             Outcome<T> and its ToHttp mapping
     Time/                 Clock ("today" in a time zone), IanaTimeZone, WeekStart
+  Domain/                 the app's own concepts and rules: enums, drafts, validators. No EF, no HTTP
   Data/                   everything EF
     GoalsDbContext.cs, GoalsDbContextFactory.cs
     Abstractions/         interfaces entities opt into (IOwnedEntity, ITimestamped)
@@ -33,6 +34,7 @@ also share a file (`Core/Auth/CurrentUser.cs` holds `ICurrentUser` and its imple
 ## Direction of calls
 
 **Endpoints → Services → Repositories → Data.** Never the other way, and never skipping a layer.
+Any layer may use **Domain** and **Core**; Domain itself uses nothing but Core.
 
 - **Endpoints** read the request and the signed-in user, call a service with plain values,
   and turn the outcome into an HTTP response. Request/response records live nested inside the
@@ -40,6 +42,9 @@ also share a file (`Core/Auth/CurrentUser.cs` holds `ICurrentUser` and its imple
 - **Services** hold the rules (validation, "create only if missing", and so on). They take plain
   values, use repositories, and return `Outcome<T>`.
 - **Repositories** find, add and save entities through `GoalsDbContext`. No business rules.
+- **Domain** holds what a goal, option or target *is* and the rules for a valid one, as plain
+  C#. Validators turn raw user input (a draft) into a checked definition, or return field errors.
+  This is where most unit tests live.
 - **Data** holds the model. Owner-only access and timestamps are enforced here for every table,
   whatever the layers above do; see [access-control.md](access-control.md).
 
@@ -67,7 +72,8 @@ Both test projects mirror the API's folders (`Core/Time/ClockTests.cs`,
 `Endpoints/ProfileEndpointsTests.cs`, ...). The only extra folder is `Infrastructure/`,
 which holds test setup (the in-memory app, the test database, test tokens and users).
 
-- **Unit tests** (`GoalsApp.Api.UnitTests`): Core helpers and services, with fake repositories.
+- **Unit tests** (`GoalsApp.Api.UnitTests`): Domain rules, Core helpers and services (with fake
+  repositories).
   No web host, no database.
 - **Integration tests** (`GoalsApp.Api.IntegrationTests`): endpoints and the data layer against
   a real Postgres in Docker.
