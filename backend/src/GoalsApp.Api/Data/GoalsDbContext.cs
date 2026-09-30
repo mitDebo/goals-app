@@ -17,6 +17,8 @@ public class GoalsDbContext(DbContextOptions<GoalsDbContext> options, ICurrentUs
         npgsql.MigrationsHistoryTable("__EFMigrationsHistory", Schema);
 
     public DbSet<Profile> Profiles => Set<Profile>();
+    public DbSet<Goal> Goals => Set<Goal>();
+    public DbSet<GoalEnumOption> GoalEnumOptions => Set<GoalEnumOption>();
 
     // Read by the owner query filter each time a query runs.
     private Guid? CurrentUserId => currentUser.UserId;
