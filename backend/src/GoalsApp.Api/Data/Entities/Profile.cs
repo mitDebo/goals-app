@@ -1,6 +1,7 @@
-using GoalsApp.Api.Data;
+using GoalsApp.Api.Core.Time;
+using GoalsApp.Api.Data.Abstractions;
 
-namespace GoalsApp.Api.Profiles;
+namespace GoalsApp.Api.Data.Entities;
 
 // App-owned profile, keyed by the auth provider's user id. No foreign key to
 // Supabase's auth tables, so auth stays swappable.

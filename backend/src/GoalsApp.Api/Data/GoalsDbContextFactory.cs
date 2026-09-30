@@ -1,4 +1,4 @@
-using GoalsApp.Api.Auth;
+using GoalsApp.Api.Core.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 

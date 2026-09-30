@@ -1,5 +1,6 @@
-using GoalsApp.Api.Auth;
+using GoalsApp.Api.Core.Auth;
 using GoalsApp.Api.Data;
+using GoalsApp.Api.Data.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 

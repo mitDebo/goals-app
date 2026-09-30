@@ -1,4 +1,4 @@
-namespace GoalsApp.Api.Profiles;
+namespace GoalsApp.Api.Core.Time;
 
 public enum WeekStart
 {

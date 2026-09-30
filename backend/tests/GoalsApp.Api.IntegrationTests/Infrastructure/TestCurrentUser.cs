@@ -1,4 +1,4 @@
-using GoalsApp.Api.Auth;
+using GoalsApp.Api.Core.Auth;
 
 namespace GoalsApp.Api.IntegrationTests.Infrastructure;
 

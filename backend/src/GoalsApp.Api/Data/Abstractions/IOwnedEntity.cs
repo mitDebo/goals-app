@@ -1,4 +1,4 @@
-namespace GoalsApp.Api.Data;
+namespace GoalsApp.Api.Data.Abstractions;
 
 // A row that belongs to one user. Queries only ever see the current user's rows,
 // and saving a row owned by someone else is refused.

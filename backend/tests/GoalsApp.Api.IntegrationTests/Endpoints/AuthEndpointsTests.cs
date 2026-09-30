@@ -3,13 +3,13 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using GoalsApp.Api.IntegrationTests.Infrastructure;
 
-namespace GoalsApp.Api.IntegrationTests;
+namespace GoalsApp.Api.IntegrationTests.Endpoints;
 
 // Spec: access-control / "Authentication required"
 // Every API endpoint except GET /api/hello requires a valid, unexpired access
 // token from the auth provider; otherwise 401.
 // GET /api/whoami is the simplest protected endpoint: it echoes the caller's user id.
-public class AuthenticationTests(GoalsApiFactory factory) : IClassFixture<GoalsApiFactory>
+public class AuthEndpointsTests(GoalsApiFactory factory) : IClassFixture<GoalsApiFactory>
 {
     private const string ProtectedPath = "/api/whoami";
 

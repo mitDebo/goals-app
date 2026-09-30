@@ -1,7 +1,9 @@
+using GoalsApp.Api.Core.Time;
+using GoalsApp.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace GoalsApp.Api.Profiles;
+namespace GoalsApp.Api.Data.Configurations;
 
 public class ProfileConfiguration : IEntityTypeConfiguration<Profile>
 {

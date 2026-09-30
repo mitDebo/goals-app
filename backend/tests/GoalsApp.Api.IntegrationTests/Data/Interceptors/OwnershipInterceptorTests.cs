@@ -1,29 +1,22 @@
-using GoalsApp.Api.Auth;
 using GoalsApp.Api.Data;
+using GoalsApp.Api.Data.Entities;
+using GoalsApp.Api.Data.Exceptions;
 using GoalsApp.Api.IntegrationTests.Infrastructure;
-using GoalsApp.Api.Profiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
 
-namespace GoalsApp.Api.IntegrationTests.Data;
+namespace GoalsApp.Api.IntegrationTests.Data.Interceptors;
 
 // Spec: access-control / "Owner-only data access", against the real test database.
-// Every owned row is filtered to the current user, stamped with its owner and
-// timestamps on save, and refused if it belongs to someone else.
-public class OwnershipTests
+// Every owned row is stamped with its owner and timestamps on save, and refused
+// if it belongs to someone else. (The read side is in GoalsDbContextTests.)
+public class OwnershipInterceptorTests
 {
     private static readonly DateTimeOffset T0 = new(2026, 5, 1, 12, 0, 0, TimeSpan.Zero);
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static GoalsDbContext As(Guid? userId, TimeProvider? clock = null) =>
         DatabaseFixture.CreateDbContext(new TestCurrentUser(userId), clock);
-
-    private static async Task CreateProfile(Guid owner)
-    {
-        await using var db = As(owner);
-        db.Profiles.Add(new Profile { UserId = owner, TimeZone = "America/Chicago" });
-        await db.SaveChangesAsync(Ct);
-    }
 
     [Fact]
     public async Task New_rows_are_stamped_with_the_current_user_and_timestamps()
@@ -65,29 +58,6 @@ public class OwnershipTests
         var saved = await check.Profiles.SingleAsync(p => p.UserId == userA, Ct);
         Assert.Equal(T0, saved.CreatedAt);
         Assert.Equal(T0.AddHours(1), saved.UpdatedAt);
-    }
-
-    [Fact]
-    public async Task Users_only_see_their_own_rows()
-    {
-        var userA = Guid.NewGuid();
-        var userB = Guid.NewGuid();
-        await CreateProfile(userA);
-        await CreateProfile(userB);
-
-        await using var asA = As(userA);
-        await using var asB = As(userB);
-        Assert.Equal([userA], await asA.Profiles.Select(p => p.UserId).ToListAsync(Ct));
-        Assert.Equal([userB], await asB.Profiles.Select(p => p.UserId).ToListAsync(Ct));
-    }
-
-    [Fact]
-    public async Task Nobody_signed_in_sees_nothing()
-    {
-        await CreateProfile(Guid.NewGuid());
-
-        await using var anonymous = As(null);
-        Assert.False(await anonymous.Profiles.AnyAsync(Ct));
     }
 
     [Fact]

@@ -1,9 +1,11 @@
-using GoalsApp.Api.Auth;
+using GoalsApp.Api.Core.Auth;
+using GoalsApp.Api.Data.Abstractions;
+using GoalsApp.Api.Data.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace GoalsApp.Api.Data;
+namespace GoalsApp.Api.Data.Interceptors;
 
 // Runs on every SaveChanges: enforces row ownership and fills in timestamps.
 public sealed class OwnershipInterceptor(ICurrentUser currentUser, TimeProvider clock) : SaveChangesInterceptor

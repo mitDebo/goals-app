@@ -1,4 +1,4 @@
-namespace GoalsApp.Api.Time;
+namespace GoalsApp.Api.Core.Time;
 
 public static class IanaTimeZone
 {

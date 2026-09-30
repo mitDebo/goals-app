@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace GoalsApp.Api.Auth;
+namespace GoalsApp.Api.Core.Auth;
 
 public static class ClaimsPrincipalExtensions
 {

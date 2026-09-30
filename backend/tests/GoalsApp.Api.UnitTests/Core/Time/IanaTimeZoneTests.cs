@@ -1,6 +1,6 @@
-using GoalsApp.Api.Time;
+using GoalsApp.Api.Core.Time;
 
-namespace GoalsApp.Api.UnitTests.Time;
+namespace GoalsApp.Api.UnitTests.Core.Time;
 
 // Spec: user-profile / "Edit settings": time zones must be valid IANA names.
 public class IanaTimeZoneTests

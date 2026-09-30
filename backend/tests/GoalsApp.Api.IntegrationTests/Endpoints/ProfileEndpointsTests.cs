@@ -3,11 +3,11 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using GoalsApp.Api.IntegrationTests.Infrastructure;
 
-namespace GoalsApp.Api.IntegrationTests;
+namespace GoalsApp.Api.IntegrationTests.Endpoints;
 
 // Spec: user-profile / "Profile created on first sign-in", "Edit settings",
 // "Server-computed today". Each test uses a fresh user, so tests don't share data.
-public class ProfileEndpointTests(GoalsApiFactory factory) : IClassFixture<GoalsApiFactory>
+public class ProfileEndpointsTests(GoalsApiFactory factory) : IClassFixture<GoalsApiFactory>
 {
     private sealed record Profile(string TimeZone, string WeekStart, DateOnly Today);
 
@@ -143,7 +143,7 @@ public class ProfileEndpointTests(GoalsApiFactory factory) : IClassFixture<Goals
     [Fact]
     public async Task Today_comes_from_the_profile_time_zone_not_UTC()
     {
-        factory.TodayClock.SetUtcNow(DateTimeOffset.Parse("2026-03-10T02:00:00Z"));
+        factory.FakeTime.SetUtcNow(DateTimeOffset.Parse("2026-03-10T02:00:00Z"));
         var client = SignedInClient();
         await client.PostAsJsonAsync("/api/me", new { timeZone = "America/New_York" }, Ct);
 

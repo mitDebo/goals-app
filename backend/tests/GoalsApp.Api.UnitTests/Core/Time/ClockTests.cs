@@ -1,16 +1,16 @@
-using GoalsApp.Api.Time;
+using GoalsApp.Api.Core.Time;
 using Microsoft.Extensions.Time.Testing;
 
-namespace GoalsApp.Api.UnitTests.Time;
+namespace GoalsApp.Api.UnitTests.Core.Time;
 
 // Spec: user-profile / "Server-computed today": the user's calendar date in their
 // profile time zone, never the server's or the request's.
-public class TodayServiceTests
+public class ClockTests
 {
     private static DateOnly TodayAt(string utcInstant, string timeZone)
     {
-        var clock = new FakeTimeProvider(DateTimeOffset.Parse(utcInstant));
-        return new TodayService(clock).TodayIn(timeZone);
+        var time = new FakeTimeProvider(DateTimeOffset.Parse(utcInstant));
+        return new Clock(time).TodayIn(timeZone);
     }
 
     [Fact]

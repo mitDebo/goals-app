@@ -1,4 +1,4 @@
-namespace GoalsApp.Api.Auth;
+namespace GoalsApp.Api.Core.Auth;
 
 // The signed-in user of the current HTTP request, from the token's "sub" claim.
 public sealed class HttpCurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUser

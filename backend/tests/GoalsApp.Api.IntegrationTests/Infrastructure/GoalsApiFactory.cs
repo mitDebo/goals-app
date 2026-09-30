@@ -1,7 +1,7 @@
+using GoalsApp.Api.Core.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using GoalsApp.Api.Time;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -15,7 +15,7 @@ public class GoalsApiFactory : WebApplicationFactory<Program>
 {
     // Controls what "today" is for the app, without touching the clock used for token expiry.
     // Starts early so tests can move it forward to any date they need.
-    public FakeTimeProvider TodayClock { get; } = new(new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero));
+    public FakeTimeProvider FakeTime { get; } = new(new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero));
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -26,8 +26,8 @@ public class GoalsApiFactory : WebApplicationFactory<Program>
 
         builder.ConfigureTestServices(services =>
         {
-            services.RemoveAll<TodayService>();
-            services.AddSingleton(new TodayService(TodayClock));
+            services.RemoveAll<Clock>();
+            services.AddSingleton(new Clock(FakeTime));
 
             services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
             {

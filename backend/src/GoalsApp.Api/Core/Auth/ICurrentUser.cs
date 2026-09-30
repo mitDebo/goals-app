@@ -1,4 +1,4 @@
-namespace GoalsApp.Api.Auth;
+namespace GoalsApp.Api.Core.Auth;
 
 // Who is making the current request; null when nobody is signed in.
 public interface ICurrentUser

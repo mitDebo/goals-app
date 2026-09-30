@@ -1,4 +1,4 @@
-namespace GoalsApp.Api.Data;
+namespace GoalsApp.Api.Data.Abstractions;
 
 // CreatedAt / UpdatedAt are filled in automatically on save.
 public interface ITimestamped

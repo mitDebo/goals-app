@@ -1,11 +1,11 @@
 using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace GoalsApp.Api.IntegrationTests;
+namespace GoalsApp.Api.IntegrationTests.Endpoints;
 
 // Spec: platform-skeleton / "Hello endpoint"
 // GET /api/hello, no auth, returns 200 with the plain-text body "hello, goals".
-public class HelloEndpointTests(WebApplicationFactory<Program> factory)
+public class HealthEndpointsTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
     [Fact]
