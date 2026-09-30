@@ -1,3 +1,4 @@
+using GoalsApp.Api.Core.Enums;
 using GoalsApp.Api.Core.Outcomes;
 using GoalsApp.Api.Core.Time;
 using GoalsApp.Api.Data.Entities;
@@ -46,7 +47,7 @@ public sealed class ProfileService(IProfileRepository profiles)
             return Outcome<Profile>.Invalid("timeZone", InvalidTimeZone);
 
         var newWeekStart = profile.WeekStart;
-        if (weekStart is not null && !WeekStartNames.TryParse(weekStart, out newWeekStart))
+        if (weekStart is not null && !EnumNames.TryParse(weekStart, out newWeekStart))
             return Outcome<Profile>.Invalid("weekStart", InvalidWeekStart);
 
         profile.TimeZone = timeZone ?? profile.TimeZone;

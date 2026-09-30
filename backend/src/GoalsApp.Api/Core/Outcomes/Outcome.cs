@@ -33,7 +33,7 @@ public sealed class Outcome<T>
 
     // Several fields at once, e.g. everything a validator found wrong.
     public static Outcome<T> Invalid(IReadOnlyDictionary<string, string[]> errors) =>
-        throw new NotImplementedException();
+        new(OutcomeStatus.Invalid, default, new Dictionary<string, string[]>(errors));
 
     public static implicit operator Outcome<T>(T value) => Success(value);
 }
