@@ -1,6 +1,5 @@
 using GoalsApp.Api.Core.Enums;
 using GoalsApp.Api.Core.Outcomes;
-using static GoalsApp.Api.Domain.GoalDefinition;
 using static GoalsApp.Api.Domain.GoalDraft;
 
 namespace GoalsApp.Api.Domain;
@@ -33,22 +32,29 @@ public static class GoalValidator
         else if (name.Length > MaxNameLength)
             errors.Add("name", $"Name must be at most {MaxNameLength} characters.");
 
-        GoalType? type = EnumNames.TryParse<GoalType>(draft.Type, out var parsedType) ? parsedType : null;
-        if (type is null)
+        GoalSettings? settings = null;
+        DisplayStyle? style = null;
+        if (!EnumNames.TryParse<GoalType>(draft.Type, out var type))
+        {
             errors.Add("type", "Type must be 'boolean', 'range', 'number' or 'enum'.");
+        }
         else
-            RejectOtherTypesSettings(draft, type.Value, errors);
-
-        var range = type == GoalType.Range ? ValidateRange(draft.Range, errors) : null;
-        var number = type == GoalType.Number ? ValidateNumber(draft.Number, errors) : null;
-        var enumSettings = type == GoalType.Enum ? ValidateEnum(draft.Enum, errors) : null;
-        var style = type is null ? null : ValidateStyle(draft.DisplayStyle, type.Value, range, errors);
-        var target = type is null ? null : ValidateTarget(draft.Target, type.Value, range, errors);
+        {
+            RejectOtherTypesSettings(draft, type, errors);
+            settings = type switch
+            {
+                GoalType.Boolean => ValidateBoolean(draft, errors),
+                GoalType.Range => ValidateRange(draft, errors),
+                GoalType.Number => ValidateNumber(draft, errors),
+                _ => ValidateEnum(draft, errors),
+            };
+            style = ValidateStyle(draft.DisplayStyle, type, settings as RangeSettings, errors);
+        }
 
         if (errors.Count > 0)
             return Outcome<GoalDefinition>.Invalid(errors.ToDictionary());
 
-        return new GoalDefinition(name!, Clean(draft.Description), type!.Value, style!.Value, range, number, enumSettings, target);
+        return new GoalDefinition(name!, Clean(draft.Description), style!.Value, settings!);
     }
 
     private static void RejectOtherTypesSettings(GoalDraft draft, GoalType type, ErrorList errors)
@@ -61,9 +67,16 @@ public static class GoalValidator
             errors.Add("enum", "Options are only for enum goals.");
     }
 
-    private static RangeSettings? ValidateRange(RangeDraft? range, ErrorList errors)
+    private static BooleanSettings ValidateBoolean(GoalDraft draft, ErrorList errors)
     {
-        if (range is null)
+        if (draft.Target is not null)
+            errors.Add("target", "Yes/no goals don't take a target: yes is always a hit.");
+        return new BooleanSettings();
+    }
+
+    private static RangeSettings? ValidateRange(GoalDraft draft, ErrorList errors)
+    {
+        if (draft.Range is not { } range)
         {
             errors.Add("range", "A range goal needs a minimum and a maximum.");
             return null;
@@ -72,25 +85,31 @@ public static class GoalValidator
         var before = errors.Count;
         var min = WholeNumber(range.Min, "range.min", "Minimum", errors);
         var max = WholeNumber(range.Max, "range.max", "Maximum", errors);
-        if (min is not null && max is not null && min >= max)
+        var validEnds = min is not null && max is not null && min < max;
+        if (min is not null && max is not null && !validEnds)
             errors.Add("range", "Minimum must be less than maximum.");
 
         var minLabel = ShortText(range.MinLabel, MaxRangeLabelLength, "range.minLabel", "Label", errors);
         var maxLabel = ShortText(range.MaxLabel, MaxRangeLabelLength, "range.maxLabel", "Label", errors);
+        var target = ValidateTarget(draft.Target, validEnds ? (min!.Value, max!.Value) : null, errors);
 
-        return errors.Count == before ? new RangeSettings(min!.Value, max!.Value, minLabel, maxLabel) : null;
+        return errors.Count == before ? new RangeSettings(min!.Value, max!.Value, minLabel, maxLabel, target) : null;
     }
 
-    private static NumberSettings? ValidateNumber(NumberDraft? number, ErrorList errors)
+    private static NumberSettings? ValidateNumber(GoalDraft draft, ErrorList errors)
     {
         var before = errors.Count;
-        var unit = ShortText(number?.Unit, MaxUnitLength, "number.unit", "Unit", errors);
-        return errors.Count == before ? new NumberSettings(unit) : null;
+        var unit = ShortText(draft.Number?.Unit, MaxUnitLength, "number.unit", "Unit", errors);
+        var target = ValidateTarget(draft.Target, wholeNumbersWithin: null, errors);
+        return errors.Count == before ? new NumberSettings(unit, target) : null;
     }
 
-    private static EnumSettings? ValidateEnum(EnumDraft? settings, ErrorList errors)
+    private static EnumSettings? ValidateEnum(GoalDraft draft, ErrorList errors)
     {
-        if (settings is null)
+        if (draft.Target is not null)
+            errors.Add("target", "Enum targets are set by marking the good options.");
+
+        if (draft.Enum is not { } settings)
         {
             errors.Add("enum", "An enum goal needs its options.");
             return null;
@@ -124,6 +143,27 @@ public static class GoalValidator
         return errors.Count == before ? new EnumSettings(settings.Ordered, options) : null;
     }
 
+    // For range goals, wholeNumbersWithin is the valid range (null if the range itself is invalid,
+    // in which case only the value's own shape is checked). For number goals it is null.
+    private static Target? ValidateTarget(TargetDraft? target, (int Min, int Max)? wholeNumbersWithin, ErrorList errors)
+    {
+        if (target is null)
+            return null;
+
+        var before = errors.Count;
+        if (!EnumNames.TryParse<TargetComparison>(target.Comparison, out var comparison))
+            errors.Add("target.comparison", "Comparison must be 'at_least' or 'at_most'.");
+
+        if (target.Value is not { } value)
+            errors.Add("target.value", "A target value is required.");
+        else if (wholeNumbersWithin is not null && value != decimal.Truncate(value))
+            errors.Add("target.value", "A range target must be a whole number.");
+        else if (wholeNumbersWithin is { } bounds && (value < bounds.Min || value > bounds.Max))
+            errors.Add("target.value", $"Target must be between {bounds.Min} and {bounds.Max}.");
+
+        return errors.Count == before ? new Target(comparison, target.Value!.Value) : null;
+    }
+
     private static DisplayStyle? ValidateStyle(string? requested, GoalType type, RangeSettings? range, ErrorList errors)
     {
         if (requested is null)
@@ -153,35 +193,6 @@ public static class GoalValidator
         GoalType.Enum => [DisplayStyle.Options],
         _ => RangeStyles,
     };
-
-    private static Target? ValidateTarget(TargetDraft? target, GoalType type, RangeSettings? range, ErrorList errors)
-    {
-        if (target is null)
-            return null;
-
-        switch (type)
-        {
-            case GoalType.Boolean:
-                errors.Add("target", "Yes/no goals don't take a target: yes is always a hit.");
-                return null;
-            case GoalType.Enum:
-                errors.Add("target", "Enum targets are set by marking the good options.");
-                return null;
-        }
-
-        var before = errors.Count;
-        if (!EnumNames.TryParse<TargetComparison>(target.Comparison, out var comparison))
-            errors.Add("target.comparison", "Comparison must be 'at_least' or 'at_most'.");
-
-        if (target.Value is not { } value)
-            errors.Add("target.value", "A target value is required.");
-        else if (type == GoalType.Range && value != decimal.Truncate(value))
-            errors.Add("target.value", "A range target must be a whole number.");
-        else if (range is not null && (value < range.Min || value > range.Max))
-            errors.Add("target.value", $"Target must be between {range.Min} and {range.Max}.");
-
-        return errors.Count == before ? new Target(comparison, target.Value!.Value) : null;
-    }
 
     // A required whole number that fits in an int, or null (with an error) if it isn't one.
     private static int? WholeNumber(decimal? value, string field, string label, ErrorList errors)

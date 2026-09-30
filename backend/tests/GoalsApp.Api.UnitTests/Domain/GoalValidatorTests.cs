@@ -33,6 +33,8 @@ public class GoalValidatorTests
         return outcome.Value;
     }
 
+    private static T Settings<T>(GoalDraft draft) where T : GoalSettings => Assert.IsType<T>(Valid(draft).Settings);
+
     private static IReadOnlyDictionary<string, string[]> Errors(GoalDraft draft)
     {
         var outcome = GoalValidator.Validate(draft);
@@ -50,10 +52,7 @@ public class GoalValidatorTests
         Assert.Equal("Read", goal.Name);
         Assert.Null(goal.Description);
         Assert.Equal(GoalType.Boolean, goal.Type);
-        Assert.Null(goal.Range);
-        Assert.Null(goal.Number);
-        Assert.Null(goal.Enum);
-        Assert.Null(goal.NumericTarget);
+        Assert.IsType<BooleanSettings>(goal.Settings);
     }
 
     [Fact]
@@ -114,7 +113,7 @@ public class GoalValidatorTests
         var goal = Valid(RangeGoal(-5, 5, minLabel: "😫", maxLabel: "🤩"));
 
         Assert.Equal(GoalType.Range, goal.Type);
-        Assert.Equal(new GoalDefinition.RangeSettings(-5, 5, "😫", "🤩"), goal.Range);
+        Assert.Equal(new RangeSettings(-5, 5, "😫", "🤩", Target: null), goal.Settings);
     }
 
     [Fact]
@@ -149,9 +148,9 @@ public class GoalValidatorTests
     [Fact]
     public void End_labels_are_trimmed_optional_and_short()
     {
-        var goal = Valid(RangeGoal(1, 10, minLabel: " wasted the day ", maxLabel: "  "));
-        Assert.Equal("wasted the day", goal.Range!.MinLabel);
-        Assert.Null(goal.Range.MaxLabel);
+        var range = Settings<RangeSettings>(RangeGoal(1, 10, minLabel: " wasted the day ", maxLabel: "  "));
+        Assert.Equal("wasted the day", range.MinLabel);
+        Assert.Null(range.MaxLabel);
 
         Valid(RangeGoal(1, 10, minLabel: new string('a', 40)));
         Assert.Contains("range.minLabel", Errors(RangeGoal(1, 10, minLabel: new string('a', 41))).Keys);
@@ -166,15 +165,15 @@ public class GoalValidatorTests
         var goal = Valid(NumberGoal(" miles "));
 
         Assert.Equal(GoalType.Number, goal.Type);
-        Assert.Equal("miles", goal.Number!.Unit);
+        Assert.Equal("miles", Assert.IsType<NumberSettings>(goal.Settings).Unit);
     }
 
     [Fact]
     public void A_number_goal_does_not_need_a_unit()
     {
-        Assert.Null(Valid(NumberGoal(unit: null)).Number!.Unit);
-        Assert.Null(Valid(NumberGoal(unit: "  ")).Number!.Unit);
-        Assert.Null(Valid(new GoalDraft("Running", null, "number")).Number!.Unit);
+        Assert.Null(Settings<NumberSettings>(NumberGoal(unit: null)).Unit);
+        Assert.Null(Settings<NumberSettings>(NumberGoal(unit: "  ")).Unit);
+        Assert.Null(Settings<NumberSettings>(new GoalDraft("Running", null, "number")).Unit);
     }
 
     [Fact]
@@ -192,9 +191,10 @@ public class GoalValidatorTests
         var goal = Valid(EnumGoal(new OptionDraft("😞", "bad"), new OptionDraft("😐", "meh"), new OptionDraft("😀", "good")));
 
         Assert.Equal(GoalType.Enum, goal.Type);
-        Assert.True(goal.Enum!.Ordered);
-        Assert.Equal(["😞", "😐", "😀"], goal.Enum.Options.Select(o => o.Label));
-        Assert.Equal(["bad", "meh", "good"], goal.Enum.Options.Select(o => o.Note));
+        var settings = Assert.IsType<EnumSettings>(goal.Settings);
+        Assert.True(settings.Ordered);
+        Assert.Equal(["😞", "😐", "😀"], settings.Options.Select(o => o.Label));
+        Assert.Equal(["bad", "meh", "good"], settings.Options.Select(o => o.Note));
     }
 
     [Fact]
@@ -202,7 +202,7 @@ public class GoalValidatorTests
     {
         var draft = EnumGoal(Labels("tea", "coffee")) with { Enum = new EnumDraft(Ordered: false, Labels("tea", "coffee")) };
 
-        Assert.False(Valid(draft).Enum!.Ordered);
+        Assert.False(Settings<EnumSettings>(draft).Ordered);
     }
 
     [Fact]
@@ -210,9 +210,9 @@ public class GoalValidatorTests
     {
         var id = Guid.NewGuid();
 
-        var goal = Valid(EnumGoal(new OptionDraft("a", Id: id), new OptionDraft("b")));
+        var settings = Settings<EnumSettings>(EnumGoal(new OptionDraft("a", Id: id), new OptionDraft("b")));
 
-        Assert.Equal([id, null], goal.Enum!.Options.Select(o => o.Id));
+        Assert.Equal([id, null], settings.Options.Select(o => o.Id));
     }
 
     [Fact]
@@ -234,7 +234,7 @@ public class GoalValidatorTests
     [Fact]
     public void Option_labels_are_required_trimmed_and_short()
     {
-        Assert.Equal(["a", "b"], Valid(EnumGoal(Labels(" a ", "b"))).Enum!.Options.Select(o => o.Label));
+        Assert.Equal(["a", "b"], Settings<EnumSettings>(EnumGoal(Labels(" a ", "b"))).Options.Select(o => o.Label));
         Assert.Contains("enum.options[1].label", Errors(EnumGoal(Labels("a", "  "))).Keys);
         Assert.Contains("enum.options[0].label", Errors(EnumGoal(new OptionDraft(null), new OptionDraft("b"))).Keys);
 
@@ -245,7 +245,7 @@ public class GoalValidatorTests
     [Fact]
     public void Option_notes_are_optional_and_at_most_200_characters()
     {
-        Assert.Null(Valid(EnumGoal(new OptionDraft("a", "  "), new OptionDraft("b"))).Enum!.Options[0].Note);
+        Assert.Null(Settings<EnumSettings>(EnumGoal(new OptionDraft("a", "  "), new OptionDraft("b"))).Options[0].Note);
 
         Valid(EnumGoal(new OptionDraft("a", new string('n', 200)), new OptionDraft("b")));
         Assert.Contains("enum.options[0].note",
@@ -314,9 +314,9 @@ public class GoalValidatorTests
     [Fact]
     public void Goals_have_no_target_unless_one_is_given()
     {
-        Assert.Null(Valid(NumberGoal()).NumericTarget);
-        Assert.Null(Valid(RangeGoal(1, 10)).NumericTarget);
-        Assert.All(Valid(EnumGoal(Labels("a", "b"))).Enum!.Options, o => Assert.False(o.IsTarget));
+        Assert.Null(Settings<NumberSettings>(NumberGoal()).Target);
+        Assert.Null(Settings<RangeSettings>(RangeGoal(1, 10)).Target);
+        Assert.All(Settings<EnumSettings>(EnumGoal(Labels("a", "b"))).Options, o => Assert.False(o.IsTarget));
     }
 
     [Theory]
@@ -326,9 +326,9 @@ public class GoalValidatorTests
     public void A_number_target_is_a_comparison_and_any_value(string comparison, string valueText, TargetComparison expected)
     {
         var value = decimal.Parse(valueText, CultureInfo.InvariantCulture);
-        var goal = Valid(NumberGoal(target: new TargetDraft(comparison, value)));
+        var number = Settings<NumberSettings>(NumberGoal(target: new TargetDraft(comparison, value)));
 
-        Assert.Equal(new GoalDefinition.Target(expected, value), goal.NumericTarget);
+        Assert.Equal(new Target(expected, value), number.Target);
     }
 
     [Theory]
@@ -337,9 +337,9 @@ public class GoalValidatorTests
     [InlineData(10)]
     public void A_range_target_is_a_whole_number_within_the_range(int value)
     {
-        var goal = Valid(RangeGoal(1, 10, target: new TargetDraft("at_least", value)));
+        var range = Settings<RangeSettings>(RangeGoal(1, 10, target: new TargetDraft("at_least", value)));
 
-        Assert.Equal(new GoalDefinition.Target(TargetComparison.AtLeast, value), goal.NumericTarget);
+        Assert.Equal(new Target(TargetComparison.AtLeast, value), range.Target);
     }
 
     [Theory]
@@ -375,10 +375,10 @@ public class GoalValidatorTests
     [Fact]
     public void Enum_targets_are_the_options_marked_good()
     {
-        var goal = Valid(EnumGoal(new OptionDraft("😞"), new OptionDraft("😐", IsTarget: true), new OptionDraft("😀", IsTarget: true)));
+        var settings = Settings<EnumSettings>(
+            EnumGoal(new OptionDraft("😞"), new OptionDraft("😐", IsTarget: true), new OptionDraft("😀", IsTarget: true)));
 
-        Assert.Equal([false, true, true], goal.Enum!.Options.Select(o => o.IsTarget));
-        Assert.Null(goal.NumericTarget);
+        Assert.Equal([false, true, true], settings.Options.Select(o => o.IsTarget));
     }
 
     [Fact]

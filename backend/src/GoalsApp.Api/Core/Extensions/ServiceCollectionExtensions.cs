@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using GoalsApp.Api.Core.Auth;
 using GoalsApp.Api.Core.Time;
 using GoalsApp.Api.Data;
@@ -20,6 +21,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICurrentUser, HttpCurrentUser>();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<Clock>();
+
+        // API JSON leaves out nulls, so a goal only carries the blocks that apply to its type.
+        services.ConfigureHttpJsonOptions(options =>
+            options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
         return services;
     }
 
@@ -36,6 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
         services.AddScoped<IProfileRepository, ProfileRepository>();
+        services.AddScoped<IGoalRepository, GoalRepository>();
         return services;
     }
 
@@ -43,6 +49,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddGoalsServices(this IServiceCollection services)
     {
         services.AddScoped<ProfileService>();
+        services.AddScoped<GoalService>();
         return services;
     }
 
