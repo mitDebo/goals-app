@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using GoalsApp.Api.Core.Auth;
+using GoalsApp.Api.Core.Enums;
 using GoalsApp.Api.Core.Outcomes;
 using GoalsApp.Api.Core.Time;
 using GoalsApp.Api.Data.Entities;

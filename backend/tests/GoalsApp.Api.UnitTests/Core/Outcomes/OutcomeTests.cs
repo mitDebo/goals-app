@@ -44,4 +44,18 @@ public class OutcomeTests
         Assert.Equal(["Not a time zone."], outcome.Errors["timeZone"]);
         Assert.Throws<InvalidOperationException>(() => outcome.Value);
     }
+
+    [Fact]
+    public void Invalid_can_carry_errors_for_several_fields()
+    {
+        var outcome = Outcome<int>.Invalid(new Dictionary<string, string[]>
+        {
+            ["name"] = ["A name is required."],
+            ["type"] = ["Unknown type."],
+        });
+
+        Assert.Equal(OutcomeStatus.Invalid, outcome.Status);
+        Assert.Equal(["A name is required."], outcome.Errors["name"]);
+        Assert.Equal(["Unknown type."], outcome.Errors["type"]);
+    }
 }

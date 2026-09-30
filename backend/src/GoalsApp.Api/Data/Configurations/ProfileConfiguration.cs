@@ -1,3 +1,4 @@
+using GoalsApp.Api.Core.Enums;
 using GoalsApp.Api.Core.Time;
 using GoalsApp.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,7 @@ public class ProfileConfiguration : IEntityTypeConfiguration<Profile>
     }
 
     private static WeekStart ParseWeekStart(string name) =>
-        WeekStartNames.TryParse(name, out var weekStart)
+        EnumNames.TryParse<WeekStart>(name, out var weekStart)
             ? weekStart
             : throw new InvalidOperationException($"Unknown week_start '{name}' in database.");
 }

@@ -31,5 +31,9 @@ public sealed class Outcome<T>
     public static Outcome<T> Invalid(string field, string message) =>
         new(OutcomeStatus.Invalid, default, new Dictionary<string, string[]> { [field] = [message] });
 
+    // Several fields at once, e.g. everything a validator found wrong.
+    public static Outcome<T> Invalid(IReadOnlyDictionary<string, string[]> errors) =>
+        new(OutcomeStatus.Invalid, default, new Dictionary<string, string[]>(errors));
+
     public static implicit operator Outcome<T>(T value) => Success(value);
 }
