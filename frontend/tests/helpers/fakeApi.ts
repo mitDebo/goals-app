@@ -27,12 +27,22 @@ type Options = {
   goals?: FakeGoal[]
   // Make GET /api/goals fail as if the server broke (500).
   failGoals?: boolean
+  // Make POST /api/goals fail with this validation error.
+  rejectGoalWith?: { field: string; message: string }
 }
 
 // A pretend backend: answers /api/hello and /api/me like the real one would,
 // and remembers the profile between calls.
-export function stubApi({ profile = null, rejectPatchWith, failProfile, goals = [], failGoals }: Options = {}) {
+export function stubApi({
+  profile = null,
+  rejectPatchWith,
+  failProfile,
+  goals = [],
+  failGoals,
+  rejectGoalWith,
+}: Options = {}) {
   let current: FakeProfile | null = profile
+  const savedGoals = [...goals]
   const withToday = (p: FakeProfile) => ({ ...p, today: '2026-09-29' })
 
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -46,7 +56,15 @@ export function stubApi({ profile = null, rejectPatchWith, failProfile, goals = 
     }
 
     if (url === '/api/goals' && method === 'GET') {
-      return failGoals ? new Response(null, { status: 500 }) : Response.json(goals)
+      return failGoals ? new Response(null, { status: 500 }) : Response.json(savedGoals)
+    }
+
+    if (url === '/api/goals' && method === 'POST') {
+      if (rejectGoalWith) return validationProblem(rejectGoalWith.field, rejectGoalWith.message)
+      const body = JSON.parse(String(init?.body)) as Omit<FakeGoal, 'id' | 'position' | 'displayStyle'>
+      const created: FakeGoal = { ...body, id: `new-${savedGoals.length + 1}`, position: savedGoals.length, displayStyle: 'toggle' }
+      savedGoals.push(created)
+      return Response.json(created, { status: 201 })
     }
 
     if (url === '/api/me' && method === 'POST') {
@@ -59,12 +77,7 @@ export function stubApi({ profile = null, rejectPatchWith, failProfile, goals = 
 
     if (url === '/api/me' && method === 'PATCH') {
       if (!current) return new Response(null, { status: 404 })
-      if (rejectPatchWith) {
-        return Response.json(
-          { title: 'One or more validation errors occurred.', status: 400, errors: { [rejectPatchWith.field]: [rejectPatchWith.message] } },
-          { status: 400 },
-        )
-      }
+      if (rejectPatchWith) return validationProblem(rejectPatchWith.field, rejectPatchWith.message)
       const body = JSON.parse(String(init?.body)) as Partial<FakeProfile>
       current = { ...current, ...body }
       return Response.json(withToday(current))
@@ -76,6 +89,13 @@ export function stubApi({ profile = null, rejectPatchWith, failProfile, goals = 
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
 }
+
+// What the real server sends back for a 400 (ASP.NET's ValidationProblem shape).
+const validationProblem = (field: string, message: string) =>
+  Response.json(
+    { title: 'One or more validation errors occurred.', status: 400, errors: { [field]: [message] } },
+    { status: 400 },
+  )
 
 // The calls made to one API path (optionally one method), as [url, init] pairs.
 export const callsTo = (fetchMock: ReturnType<typeof stubApi>, path: string, method?: string) =>

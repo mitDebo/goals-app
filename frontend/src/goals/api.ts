@@ -1,4 +1,4 @@
-import { apiFetch } from '@/api/client'
+import { apiFetch, readFieldErrors, type FieldErrors } from '@/api/client'
 
 // A goal as the server sends it. Only the block for the goal's type is present.
 export type Goal = {
@@ -35,5 +35,29 @@ export function describeKind(goal: Goal): string {
       return goal.number?.unit ? `Number (${goal.number.unit})` : 'Number'
     case 'enum':
       return goal.enum?.options.map((option) => option.label).join(' ') ?? ''
+  }
+}
+
+// What the form sends to create a goal. Only the block for the chosen type is included.
+export type GoalDraft = {
+  name: string
+  description?: string
+  type: Goal['type']
+  range?: { min?: number; max?: number }
+  number?: { unit?: string }
+  enum?: { ordered: boolean; options: { label: string }[] }
+}
+
+export type SaveGoalResult = { ok: true; goal: Goal } | { ok: false; errors: FieldErrors }
+
+// On a 400, returns the server's messages keyed by field ("name", "range.max", ...).
+export async function createGoal(token: string, draft: GoalDraft): Promise<SaveGoalResult> {
+  try {
+    const res = await apiFetch('/api/goals', token, { method: 'POST', body: JSON.stringify(draft) })
+    if (res.ok) return { ok: true, goal: (await res.json()) as Goal }
+    const errors = await readFieldErrors(res)
+    return { ok: false, errors: Object.keys(errors).length ? errors : { '': ["Couldn't save the goal."] } }
+  } catch {
+    return { ok: false, errors: { '': ["Couldn't reach the server. Try again."] } }
   }
 }

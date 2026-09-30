@@ -5,6 +5,7 @@ import { ApiStatus } from '@/components/ApiStatus'
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage'
 import { GoalsPage } from '@/pages/GoalsPage'
 import { HomePage } from '@/pages/HomePage'
+import { NewGoalPage } from '@/pages/NewGoalPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SignInPage } from '@/pages/SignInPage'
 
@@ -16,6 +17,7 @@ function Guarded() {
   return (
     <Routes>
       <Route path="/goals" element={<GoalsPage session={session} />} />
+      <Route path="/goals/new" element={<NewGoalPage session={session} />} />
       <Route path="/settings" element={<SettingsPage session={session} />} />
       <Route path="*" element={<HomePage session={session} />} />
     </Routes>
