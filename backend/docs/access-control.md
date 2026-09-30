@@ -16,7 +16,7 @@ so endpoints never need to remember it.
    - **Save rules** (`Data/Interceptors/OwnershipInterceptor.cs`, on every `SaveChanges`):
      - new rows with an empty `UserId` are stamped with the current user;
      - saving a row owned by anyone else, or any owned row while nobody is
-       signed in, throws `OwnershipViolationException` (`Data/Exceptions/`);
+       signed in, throws `OwnershipInterceptor.OwnershipViolationException`;
      - `CreatedAt`/`UpdatedAt` are set on insert, `UpdatedAt` on update, and
        `CreatedAt` can never be changed afterwards.
 

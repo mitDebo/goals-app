@@ -7,6 +7,9 @@ public static class HealthEndpoints
         // Walking-skeleton endpoint: public, proves the API is reachable end to end.
         // Returning a string from a minimal API endpoint writes it as text/plain.
         app.MapGet("/api/hello", () => "hello, goals").AllowAnonymous();
+
+        // Public: 200 when every health check passes (including reaching the database), 503 otherwise.
+        app.MapHealthChecks("/api/health").AllowAnonymous();
         return app;
     }
 }

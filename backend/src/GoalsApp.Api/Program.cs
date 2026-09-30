@@ -6,7 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services
     .AddGoalsCore()
     .AddGoalsData(builder.Configuration)
-    .AddGoalsAuth(builder.Configuration);
+    .AddGoalsAuth(builder.Configuration)
+    .AddGoalsServices();
 
 var app = builder.Build();
 

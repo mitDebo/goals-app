@@ -1,6 +1,6 @@
 using GoalsApp.Api.Data;
 using GoalsApp.Api.Data.Entities;
-using GoalsApp.Api.Data.Exceptions;
+using GoalsApp.Api.Data.Interceptors;
 using GoalsApp.Api.IntegrationTests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
@@ -69,7 +69,7 @@ public class OwnershipInterceptorTests
         await using (var db = As(userA))
         {
             db.Profiles.Add(new Profile { UserId = userB, TimeZone = "America/Chicago" });
-            await Assert.ThrowsAsync<OwnershipViolationException>(() => db.SaveChangesAsync(Ct));
+            await Assert.ThrowsAsync<OwnershipInterceptor.OwnershipViolationException>(() => db.SaveChangesAsync(Ct));
         }
 
         await using var asB = As(userB);
@@ -82,6 +82,6 @@ public class OwnershipInterceptorTests
         await using var anonymous = As(null);
         anonymous.Profiles.Add(new Profile { UserId = Guid.NewGuid(), TimeZone = "America/Chicago" });
 
-        await Assert.ThrowsAsync<OwnershipViolationException>(() => anonymous.SaveChangesAsync(Ct));
+        await Assert.ThrowsAsync<OwnershipInterceptor.OwnershipViolationException>(() => anonymous.SaveChangesAsync(Ct));
     }
 }

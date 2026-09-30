@@ -1,7 +1,10 @@
 using GoalsApp.Api.Core.Auth;
 using GoalsApp.Api.Core.Time;
 using GoalsApp.Api.Data;
+using GoalsApp.Api.Data.HealthChecks;
 using GoalsApp.Api.Data.Interceptors;
+using GoalsApp.Api.Repositories;
+using GoalsApp.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -23,12 +26,23 @@ public static class ServiceCollectionExtensions
     // Database: connection string "ConnectionStrings:Goals" comes from user-secrets
     // locally and from the GOALS_DB_CONNECTION env var (via docker compose) in production.
     // The interceptor enforces row ownership and fills in timestamps on every save.
+    // Repositories live here too: they are the only code that touches the DbContext.
     public static IServiceCollection AddGoalsData(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<OwnershipInterceptor>();
         services.AddDbContext<GoalsDbContext>((provider, options) =>
             options.UseNpgsql(configuration.GetConnectionString("Goals"), GoalsDbContext.ConfigureNpgsql)
                 .AddInterceptors(provider.GetRequiredService<OwnershipInterceptor>()));
+        services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
+
+        services.AddScoped<IProfileRepository, ProfileRepository>();
+        return services;
+    }
+
+    // Feature business logic, called by endpoints.
+    public static IServiceCollection AddGoalsServices(this IServiceCollection services)
+    {
+        services.AddScoped<ProfileService>();
         return services;
     }
 
