@@ -4,7 +4,7 @@ namespace GoalsApp.Api.UnitTests.Core.Enums;
 
 public class EnumNamesTests
 {
-    private enum Sample
+    public enum Sample
     {
         One,
         TwoWords,
