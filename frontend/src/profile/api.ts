@@ -1,4 +1,4 @@
-import { apiFetch } from '@/api/client'
+import { apiFetch, readFieldErrors } from '@/api/client'
 
 export type WeekStart = 'sunday' | 'monday'
 export type Profile = { timeZone: string; weekStart: WeekStart; today: string }
@@ -34,7 +34,6 @@ export async function updateProfile(
   const res = await apiFetch('/api/me', token, { method: 'PATCH', body: JSON.stringify(changes) })
   if (res.ok) return { ok: true, profile: (await res.json()) as Profile }
 
-  const problem = (await res.json().catch(() => null)) as { errors?: Record<string, string[]> } | null
-  const errors = Object.values(problem?.errors ?? {}).flat()
+  const errors = Object.values(await readFieldErrors(res)).flat()
   return { ok: false, errors: errors.length ? errors : ["Couldn't save your settings."] }
 }

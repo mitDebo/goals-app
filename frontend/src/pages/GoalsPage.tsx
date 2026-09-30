@@ -18,6 +18,9 @@ export function GoalsPage({ session }: { session: Session }) {
   return (
     <section className="flex flex-col items-start gap-3">
       <h2 className="text-xl font-semibold">Your goals</h2>
+      <Link to="/goals/new" className="underline">
+        New goal
+      </Link>
 
       {state.kind === 'loading' && <p>Loading…</p>}
       {state.kind === 'failed' && (

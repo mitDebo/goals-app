@@ -73,7 +73,7 @@ test('saving a yes/no goal creates it and returns to your goals', async () => {
 
   expect(await screen.findByRole('heading', { name: 'Your goals' })).toBeInTheDocument()
   expect(window.location.pathname).toBe('/goals')
-  expect(screen.getByRole('heading', { name: 'Read' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Read' })).toBeInTheDocument()
   expect(sentGoal(fetchMock)).toEqual({ name: 'Read', description: '20 pages', type: 'boolean' })
 })
 
