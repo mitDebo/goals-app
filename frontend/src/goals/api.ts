@@ -43,7 +43,8 @@ export type GoalDraft = {
   name: string
   description?: string
   type: Goal['type']
-  range?: { min?: number; max?: number }
+  displayStyle?: string
+  range?: { min?: number; max?: number; minLabel?: string; maxLabel?: string }
   number?: { unit?: string }
   enum?: { ordered: boolean; options: { label: string }[] }
 }

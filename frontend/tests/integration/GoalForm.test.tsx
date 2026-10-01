@@ -140,7 +140,11 @@ test.each([
   render(<App />)
 
   await user.type(await screen.findByLabelText('Name'), 'Something')
-  if (field.startsWith('range')) await user.click(screen.getByRole('radio', { name: 'Range' }))
+  if (field.startsWith('range')) {
+    await user.click(screen.getByRole('radio', { name: 'Range' }))
+    await user.type(screen.getByLabelText('Minimum'), '1')
+    await user.type(screen.getByLabelText('Maximum'), '10')
+  }
   if (field.startsWith('enum')) await user.click(screen.getByRole('radio', { name: 'Pick one' }))
   await user.click(screen.getByRole('button', { name: 'Save' }))
 
