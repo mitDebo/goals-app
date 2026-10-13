@@ -33,7 +33,12 @@ export function GoalsPage({ session }: { session: Session }) {
         <ul aria-label="Your goals" className="flex w-full max-w-md flex-col gap-2">
           {state.goals.map((goal) => (
             <li key={goal.id} className="rounded-md border p-3">
-              <h3 className="font-medium">{goal.name}</h3>
+              <div className="flex items-baseline justify-between gap-2">
+                <h3 className="font-medium">{goal.name}</h3>
+                <Link to={`/goals/${goal.id}/edit`} aria-label={`Edit ${goal.name}`} className="text-sm underline">
+                  Edit
+                </Link>
+              </div>
               <p className="text-sm text-muted-foreground">{describeKind(goal)}</p>
             </li>
           ))}

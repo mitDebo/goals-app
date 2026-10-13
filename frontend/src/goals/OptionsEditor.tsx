@@ -16,7 +16,8 @@ import { moveItem } from '@/goals/optionRules'
 
 // Each option carries a key that never changes, so React (and the drag library) can tell
 // options apart even while they're being moved or edited.
-export type EditableOption = { key: number; label: string; note: string }
+// `id` is set for options that already exist on the server.
+export type EditableOption = { key: number; id?: string; label: string; note: string; isTarget: boolean }
 
 type Props = {
   options: EditableOption[]
@@ -62,6 +63,7 @@ export function OptionsEditor({ options, onChange, onAdd, errors }: Props) {
               noteErrors={errors[`enum.options[${i}].note`]}
               onLabel={(label) => update(option.key, { label })}
               onNote={(note) => update(option.key, { note })}
+              onIsTarget={(isTarget) => update(option.key, { isTarget })}
               onMoveUp={() => move(i, i - 1)}
               onMoveDown={() => move(i, i + 1)}
               onRemove={() => onChange(options.filter((o) => o.key !== option.key))}
@@ -89,6 +91,7 @@ function OptionRow(props: {
   noteErrors?: string[]
   onLabel: (label: string) => void
   onNote: (note: string) => void
+  onIsTarget: (isTarget: boolean) => void
   onMoveUp: () => void
   onMoveDown: () => void
   onRemove: () => void
@@ -128,6 +131,15 @@ function OptionRow(props: {
             <input {...fieldProps} className={inputClass} value={option.note} onChange={(e) => props.onNote(e.target.value)} />
           )}
         </Field>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            aria-label={`Option ${n} counts as a hit`}
+            checked={option.isTarget}
+            onChange={(e) => props.onIsTarget(e.target.checked)}
+          />
+          Counts as a hit
+        </label>
       </div>
 
       <div className="mt-6 flex flex-col gap-1">
