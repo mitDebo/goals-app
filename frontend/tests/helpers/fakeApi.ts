@@ -27,7 +27,7 @@ type Options = {
   goals?: FakeGoal[]
   // Make GET /api/goals fail as if the server broke (500).
   failGoals?: boolean
-  // Make POST /api/goals fail with this validation error.
+  // Make POST /api/goals and PUT /api/goals/{id} fail with this validation error.
   rejectGoalWith?: { field: string; message: string }
 }
 
@@ -57,6 +57,22 @@ export function stubApi({
 
     if (url === '/api/goals' && method === 'GET') {
       return failGoals ? new Response(null, { status: 500 }) : Response.json(savedGoals)
+    }
+
+    const goalPath = url.match(/^\/api\/goals\/([^/]+)$/)
+    if (goalPath && goalPath[1] !== 'order') {
+      const index = savedGoals.findIndex((g) => g.id === goalPath[1])
+      if (index < 0) return new Response(null, { status: 404 })
+      if (method === 'GET') return Response.json(savedGoals[index])
+      if (method === 'PUT') {
+        if (rejectGoalWith) return validationProblem(rejectGoalWith.field, rejectGoalWith.message)
+        const body = JSON.parse(String(init?.body)) as Omit<FakeGoal, 'id' | 'position' | 'displayStyle'> & {
+          displayStyle?: string
+        }
+        const { id, position, displayStyle } = savedGoals[index]
+        savedGoals[index] = { ...body, displayStyle: body.displayStyle ?? displayStyle, id, position }
+        return Response.json(savedGoals[index])
+      }
     }
 
     if (url === '/api/goals' && method === 'POST') {
