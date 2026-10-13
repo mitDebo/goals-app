@@ -46,15 +46,32 @@ export type GoalDraft = {
   displayStyle?: string
   range?: { min?: number; max?: number; minLabel?: string; maxLabel?: string }
   number?: { unit?: string }
-  enum?: { ordered: boolean; options: { label: string }[] }
+  enum?: { ordered: boolean; options: { id?: string; label: string; note?: string; isTarget?: boolean }[] }
+  target?: { comparison: 'at_least' | 'at_most'; value: number }
 }
 
 export type SaveGoalResult = { ok: true; goal: Goal } | { ok: false; errors: FieldErrors }
 
-// On a 400, returns the server's messages keyed by field ("name", "range.max", ...).
-export async function createGoal(token: string, draft: GoalDraft): Promise<SaveGoalResult> {
+// One goal, or null if it doesn't exist, isn't yours, or couldn't be loaded.
+export async function getGoal(token: string, id: string): Promise<Goal | null> {
   try {
-    const res = await apiFetch('/api/goals', token, { method: 'POST', body: JSON.stringify(draft) })
+    const res = await apiFetch(`/api/goals/${encodeURIComponent(id)}`, token)
+    return res.ok ? ((await res.json()) as Goal) : null
+  } catch {
+    return null
+  }
+}
+
+export const createGoal = (token: string, draft: GoalDraft) => sendGoal(token, '/api/goals', 'POST', draft)
+
+// Replaces the whole goal with the draft.
+export const updateGoal = (token: string, id: string, draft: GoalDraft) =>
+  sendGoal(token, `/api/goals/${encodeURIComponent(id)}`, 'PUT', draft)
+
+// On a 400, returns the server's messages keyed by field ("name", "range.max", ...).
+async function sendGoal(token: string, path: string, method: string, draft: GoalDraft): Promise<SaveGoalResult> {
+  try {
+    const res = await apiFetch(path, token, { method, body: JSON.stringify(draft) })
     if (res.ok) return { ok: true, goal: (await res.json()) as Goal }
     const errors = await readFieldErrors(res)
     return { ok: false, errors: Object.keys(errors).length ? errors : { '': ["Couldn't save the goal."] } }

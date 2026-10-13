@@ -4,6 +4,7 @@ import { useAuth } from '@/auth/context'
 import { ApiStatus } from '@/components/ApiStatus'
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage'
 import { GoalsPage } from '@/pages/GoalsPage'
+import { EditGoalPage } from '@/pages/EditGoalPage'
 import { HomePage } from '@/pages/HomePage'
 import { NewGoalPage } from '@/pages/NewGoalPage'
 import { SettingsPage } from '@/pages/SettingsPage'
@@ -18,6 +19,7 @@ function Guarded() {
     <Routes>
       <Route path="/goals" element={<GoalsPage session={session} />} />
       <Route path="/goals/new" element={<NewGoalPage session={session} />} />
+      <Route path="/goals/:id/edit" element={<EditGoalPage session={session} />} />
       <Route path="/settings" element={<SettingsPage session={session} />} />
       <Route path="*" element={<HomePage session={session} />} />
     </Routes>
