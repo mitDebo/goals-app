@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Field } from '@/components/Field'
 import { createGoal, type Goal, type GoalDraft } from '@/goals/api'
 import { RangeControl } from '@/goals/controls/RangeControl'
+import { checkOptions } from '@/goals/optionRules'
+import { OptionsEditor, type EditableOption } from '@/goals/OptionsEditor'
 import { checkRange, rangeStyles, suggestStyle, type RangeStyle } from '@/goals/rangeRules'
 
 type Kind = Goal['type']
@@ -27,10 +29,6 @@ const fieldKeys: Record<Kind, (key: string) => boolean> = {
 
 const inputClass = 'rounded-md border bg-background px-2 py-1'
 
-// Each option gets a key that never changes, so React keeps the right text in the right box
-// when an option above it is removed.
-type Option = { key: number; label: string }
-
 export function NewGoalPage({ session }: { session: Session }) {
   const navigate = useNavigate()
   const nextKey = useRef(2)
@@ -46,10 +44,11 @@ export function NewGoalPage({ session }: { session: Session }) {
   const [pickedStyle, setPickedStyle] = useState<RangeStyle | null>(null)
   const [previewValue, setPreviewValue] = useState<number | undefined>(undefined)
   const [unit, setUnit] = useState('')
-  const [options, setOptions] = useState<Option[]>([
-    { key: 0, label: '' },
-    { key: 1, label: '' },
+  const [options, setOptions] = useState<EditableOption[]>([
+    { key: 0, label: '', note: '' },
+    { key: 1, label: '', note: '' },
   ])
+  const [ranked, setRanked] = useState(false)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [saving, setSaving] = useState(false)
 
@@ -69,15 +68,22 @@ export function NewGoalPage({ session }: { session: Session }) {
       if (pickedStyle) draft.displayStyle = pickedStyle
     }
     if (kind === 'number') draft.number = unit.trim() ? { unit } : {}
-    if (kind === 'enum') draft.enum = { ordered: false, options: options.map((o) => ({ label: o.label })) }
+    if (kind === 'enum') {
+      draft.enum = {
+        ordered: ranked,
+        options: options.map((o) => (o.note.trim() ? { label: o.label, note: o.note } : { label: o.label })),
+      }
+    }
     return draft
   }
 
   const save = async (event: FormEvent) => {
     event.preventDefault()
     // Problems the form can spot itself are shown straight away, without asking the server.
-    if (kind === 'range' && !rangeIsValid) {
-      setErrors(range.errors)
+    const formErrors =
+      kind === 'range' ? range.errors : kind === 'enum' ? checkOptions(options.map((o) => o.label)) : {}
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors)
       return
     }
     setSaving(true)
@@ -87,10 +93,7 @@ export function NewGoalPage({ session }: { session: Session }) {
     else setErrors(result.errors)
   }
 
-  const addOption = () => setOptions([...options, { key: nextKey.current++, label: '' }])
-  const removeOption = (key: number) => setOptions(options.filter((o) => o.key !== key))
-  const setOptionLabel = (key: number, label: string) =>
-    setOptions(options.map((o) => (o.key === key ? { ...o, label } : o)))
+  const addOption = () => setOptions([...options, { key: nextKey.current++, label: '', note: '' }])
 
   const shownHere = (key: string) => key === 'name' || key === 'description' || fieldKeys[kind](key)
   const otherErrors = Object.entries(errors)
@@ -215,29 +218,11 @@ export function NewGoalPage({ session }: { session: Session }) {
 
         {kind === 'enum' && (
           <div className="flex flex-col gap-2">
-            {options.map((option, i) => (
-              <div key={option.key} className="flex items-end gap-2">
-                <Field id={`goal-option-${option.key}`} label={`Option ${i + 1}`} errors={errors[`enum.options[${i}].label`]}>
-                  {(props) => (
-                    <input
-                      {...props}
-                      className={inputClass}
-                      value={option.label}
-                      onChange={(e) => setOptionLabel(option.key, e.target.value)}
-                    />
-                  )}
-                </Field>
-                {options.length > 2 && (
-                  <Button type="button" variant="outline" aria-label={`Remove option ${i + 1}`} onClick={() => removeOption(option.key)}>
-                    Remove
-                  </Button>
-                )}
-              </div>
-            ))}
-            <GroupErrors errors={errors['enum.options'] ?? errors.enum} />
-            <Button type="button" variant="outline" className="self-start" onClick={addOption}>
-              Add option
-            </Button>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={ranked} onChange={(e) => setRanked(e.target.checked)} />
+              Ranked (first is worst, last is best)
+            </label>
+            <OptionsEditor options={options} onChange={setOptions} onAdd={addOption} errors={errors} />
           </div>
         )}
 
