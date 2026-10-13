@@ -145,7 +145,11 @@ test.each([
     await user.type(screen.getByLabelText('Minimum'), '1')
     await user.type(screen.getByLabelText('Maximum'), '10')
   }
-  if (field.startsWith('enum')) await user.click(screen.getByRole('radio', { name: 'Pick one' }))
+  if (field.startsWith('enum')) {
+    await user.click(screen.getByRole('radio', { name: 'Pick one' }))
+    await user.type(screen.getByLabelText('Option 1'), 'a')
+    await user.type(screen.getByLabelText('Option 2'), 'b')
+  }
   await user.click(screen.getByRole('button', { name: 'Save' }))
 
   expect(await screen.findByText(message)).toBeInTheDocument()
