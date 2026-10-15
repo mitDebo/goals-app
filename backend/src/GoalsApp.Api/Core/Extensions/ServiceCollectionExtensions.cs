@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IProfileRepository, ProfileRepository>();
         services.AddScoped<IGoalRepository, GoalRepository>();
+        services.AddScoped<IPlanRepository, PlanRepository>();
         return services;
     }
 
@@ -50,6 +51,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<ProfileService>();
         services.AddScoped<GoalService>();
+        services.AddScoped<PlanService>();
         return services;
     }
 
