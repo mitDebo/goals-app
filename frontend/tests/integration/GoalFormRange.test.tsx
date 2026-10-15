@@ -7,6 +7,8 @@ import { callsTo, stubApi } from '../helpers/fakeApi'
 
 // Spec: goals / "Range settings" and "Display style"; change 03 task 4.2.
 
+// Parked for the prototype: new goals are yes/no only (spec/prototype.md). Re-enable with the other kinds.
+
 vi.mock('@/auth/supabase', async () => {
   const { fakeAuth } = await import('../helpers/fakeAuth')
   return { supabase: { auth: fakeAuth.auth } }
@@ -38,7 +40,7 @@ const sentGoal = (fetchMock: ReturnType<typeof stubApi>) =>
 
 const preview = () => screen.getByRole('region', { name: 'Preview' })
 
-test('each end of the range can have a label', async () => {
+test.skip('each end of the range can have a label', async () => {
   const { user, fetchMock } = await rangeForm('1', '10')
 
   await user.type(screen.getByLabelText('Label for the low end (optional)'), 'wasted the day')
@@ -49,7 +51,7 @@ test('each end of the range can have a label', async () => {
   expect(sentGoal(fetchMock).range).toEqual({ min: 1, max: 10, minLabel: 'wasted the day', maxLabel: '🤩' })
 })
 
-test('the minimum must be below the maximum, checked before anything is sent', async () => {
+test.skip('the minimum must be below the maximum, checked before anything is sent', async () => {
   const { user, fetchMock } = await rangeForm('10', '10')
 
   await user.click(screen.getByRole('button', { name: 'Save' }))
@@ -58,7 +60,7 @@ test('the minimum must be below the maximum, checked before anything is sent', a
   expect(callsTo(fetchMock, '/api/goals', 'POST')).toHaveLength(0)
 })
 
-test('both ends must be whole numbers, checked before anything is sent', async () => {
+test.skip('both ends must be whole numbers, checked before anything is sent', async () => {
   const { user, fetchMock } = await rangeForm('1', '7.5')
 
   await user.click(screen.getByRole('button', { name: 'Save' }))
@@ -67,7 +69,7 @@ test('both ends must be whole numbers, checked before anything is sent', async (
   expect(callsTo(fetchMock, '/api/goals', 'POST')).toHaveLength(0)
 })
 
-test('the suggested style follows the range size until you pick one yourself', async () => {
+test.skip('the suggested style follows the range size until you pick one yourself', async () => {
   const { user } = await rangeForm('1', '5')
 
   expect(screen.getByRole('radio', { name: 'Buttons' })).toBeChecked()
@@ -82,7 +84,7 @@ test('the suggested style follows the range size until you pick one yourself', a
   expect(screen.getByRole('radio', { name: 'Dial' })).toBeChecked()
 })
 
-test('a style you pick yourself is saved with the goal', async () => {
+test.skip('a style you pick yourself is saved with the goal', async () => {
   const picked = await rangeForm('1', '5')
   await picked.user.click(screen.getByRole('radio', { name: 'Emoji scale' }))
   await picked.user.click(screen.getByRole('button', { name: 'Save' }))
@@ -91,20 +93,20 @@ test('a style you pick yourself is saved with the goal', async () => {
   expect(sentGoal(picked.fetchMock).displayStyle).toBe('emoji_scale')
 })
 
-test('there is no preview until the range is valid', async () => {
+test.skip('there is no preview until the range is valid', async () => {
   await rangeForm('5', '1')
 
   expect(screen.queryByRole('region', { name: 'Preview' })).not.toBeInTheDocument()
 })
 
-test('the preview shows buttons for each value', async () => {
+test.skip('the preview shows buttons for each value', async () => {
   await rangeForm('1', '5')
 
   const labels = within(preview()).getAllByRole('button').map((b) => b.textContent)
   expect(labels).toEqual(['1', '2', '3', '4', '5'])
 })
 
-test('the preview shows a slider across the range', async () => {
+test.skip('the preview shows a slider across the range', async () => {
   const { user } = await rangeForm('1', '50')
   await user.click(screen.getByRole('radio', { name: 'Slider' }))
 
@@ -113,7 +115,7 @@ test('the preview shows a slider across the range', async () => {
   expect(slider).toHaveAttribute('max', '50')
 })
 
-test('the preview shows a dial across the range', async () => {
+test.skip('the preview shows a dial across the range', async () => {
   const { user } = await rangeForm('-5', '5')
   await user.click(screen.getByRole('radio', { name: 'Dial' }))
 
@@ -122,7 +124,7 @@ test('the preview shows a dial across the range', async () => {
   expect(dial).toHaveAttribute('aria-valuemax', '5')
 })
 
-test('the preview shows a stepper that stays within the range', async () => {
+test.skip('the preview shows a stepper that stays within the range', async () => {
   const { user } = await rangeForm('1', '3')
   await user.click(screen.getByRole('radio', { name: 'Stepper' }))
 
@@ -135,7 +137,7 @@ test('the preview shows a stepper that stays within the range', async () => {
   expect(increase).toBeDisabled()
 })
 
-test('the preview shows an emoji scale from worst to best', async () => {
+test.skip('the preview shows an emoji scale from worst to best', async () => {
   const { user } = await rangeForm('1', '5')
   await user.click(screen.getByRole('radio', { name: 'Emoji scale' }))
 

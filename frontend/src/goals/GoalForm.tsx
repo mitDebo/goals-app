@@ -28,6 +28,10 @@ const fieldKeys: Record<Kind, (key: string) => boolean> = {
 
 type Comparison = 'at_least' | 'at_most'
 
+// Prototype: new goals are yes/no only (see spec/prototype.md). The other kinds' code stays for later,
+// and an existing goal of another kind keeps its kind when edited.
+const prototypeKinds: Kind[] = ['boolean']
+
 const inputClass = 'rounded-md border bg-background px-2 py-1'
 
 type Props = {
@@ -147,6 +151,8 @@ export function GoalForm({ title, initial, save: saveDraft }: Props) {
   const addOption = () =>
     setOptions([...options, { key: nextKey.current++, label: '', note: '', isTarget: false }])
 
+  const availableKinds = kinds.filter((k) => prototypeKinds.includes(k.value) || k.value === initial?.type)
+
   const shownHere = (key: string) => key === 'name' || key === 'description' || fieldKeys[kind](key)
   const otherErrors = Object.entries(errors)
     .filter(([key]) => !shownHere(key))
@@ -180,21 +186,23 @@ export function GoalForm({ title, initial, save: saveDraft }: Props) {
           )}
         </Field>
 
-        <fieldset className="flex flex-col gap-1">
-          <legend>Kind of goal</legend>
-          {kinds.map((k) => (
-            <label key={k.value} className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="kind"
-                value={k.value}
-                checked={kind === k.value}
-                onChange={() => setKind(k.value)}
-              />
-              {k.label}
-            </label>
-          ))}
-        </fieldset>
+        {availableKinds.length > 1 && (
+          <fieldset className="flex flex-col gap-1">
+            <legend>Kind of goal</legend>
+            {availableKinds.map((k) => (
+              <label key={k.value} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="kind"
+                  value={k.value}
+                  checked={kind === k.value}
+                  onChange={() => setKind(k.value)}
+                />
+                {k.label}
+              </label>
+            ))}
+          </fieldset>
+        )}
 
         {kind === 'range' && (
           <div className="flex flex-col gap-2">
