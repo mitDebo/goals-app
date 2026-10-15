@@ -28,7 +28,6 @@ const sentGoal = (fetchMock: ReturnType<typeof stubApi>) => {
   return JSON.parse(String(posts[0][1]?.body))
 }
 
-const kindFields = ['Minimum', 'Maximum', 'Unit (optional)', 'Option 1']
 
 test('the goals page has a New goal link that opens the form', async () => {
   const user = userEvent.setup()
@@ -42,24 +41,13 @@ test('the goals page has a New goal link that opens the form', async () => {
   expect(await screen.findByRole('heading', { name: 'New goal' })).toBeInTheDocument()
 })
 
-test('choosing a kind of goal shows only that kind of goal\'s fields', async () => {
-  const user = userEvent.setup()
+test('new goals are yes/no only for now, so there is no kind picker', async () => {
   stubApi()
   render(<App />)
-  const shown = () => kindFields.filter((label) => screen.queryByLabelText(label))
 
-  expect(await screen.findByRole('radio', { name: 'Yes / no' })).toBeChecked()
-  expect(shown()).toEqual([])
-
-  await user.click(screen.getByRole('radio', { name: 'Range' }))
-  expect(shown()).toEqual(['Minimum', 'Maximum'])
-
-  await user.click(screen.getByRole('radio', { name: 'Number' }))
-  expect(shown()).toEqual(['Unit (optional)'])
-
-  await user.click(screen.getByRole('radio', { name: 'Pick one' }))
-  expect(shown()).toEqual(['Option 1'])
-  expect(screen.getByLabelText('Option 2')).toBeInTheDocument()
+  await screen.findByLabelText('Name')
+  expect(screen.queryByRole('radio', { name: 'Range' })).not.toBeInTheDocument()
+  expect(screen.queryByText('Kind of goal')).not.toBeInTheDocument()
 })
 
 test('saving a yes/no goal creates it and returns to your goals', async () => {
@@ -77,7 +65,8 @@ test('saving a yes/no goal creates it and returns to your goals', async () => {
   expect(sentGoal(fetchMock)).toEqual({ name: 'Read', description: '20 pages', type: 'boolean' })
 })
 
-test('a range goal is saved with its two ends', async () => {
+// Parked for the prototype (yes/no only).
+test.skip('a range goal is saved with its two ends', async () => {
   const user = userEvent.setup()
   const fetchMock = stubApi()
   render(<App />)
@@ -92,7 +81,8 @@ test('a range goal is saved with its two ends', async () => {
   expect(sentGoal(fetchMock)).toEqual({ name: 'Focus', type: 'range', range: { min: -5, max: 5 } })
 })
 
-test('a number goal is saved with its unit', async () => {
+// Parked for the prototype (yes/no only).
+test.skip('a number goal is saved with its unit', async () => {
   const user = userEvent.setup()
   const fetchMock = stubApi()
   render(<App />)
@@ -106,7 +96,8 @@ test('a number goal is saved with its unit', async () => {
   expect(sentGoal(fetchMock)).toEqual({ name: 'Running', type: 'number', number: { unit: 'miles' } })
 })
 
-test('a pick-one goal is saved with its options in order, and options can be added and removed', async () => {
+// Parked for the prototype (yes/no only).
+test.skip('a pick-one goal is saved with its options in order, and options can be added and removed', async () => {
   const user = userEvent.setup()
   const fetchMock = stubApi()
   render(<App />)
@@ -132,8 +123,7 @@ test('a pick-one goal is saved with its options in order, and options can be add
 
 test.each([
   ['name', 'Name', 'A name is required.'],
-  ['range.max', 'Maximum', 'Maximum must be a whole number.'],
-  ['enum.options[1].label', 'Option 2', 'Each option needs a label.'],
+  // Parked for the prototype (yes/no only): range.max → Maximum, enum.options[1].label → Option 2.
 ])('a server error for %s appears next to that field', async (field, label, message) => {
   const user = userEvent.setup()
   stubApi({ rejectGoalWith: { field, message } })

@@ -7,6 +7,8 @@ import { callsTo, stubApi } from '../helpers/fakeApi'
 
 // Spec: goals / "Optional per-day target"; change 03 task 4.4.
 
+// Parked for the prototype: new goals are yes/no only (spec/prototype.md). Re-enable with the other kinds.
+
 vi.mock('@/auth/supabase', async () => {
   const { fakeAuth } = await import('../helpers/fakeAuth')
   return { supabase: { auth: fakeAuth.auth } }
@@ -38,13 +40,13 @@ async function saveAndReturn(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole('heading', { name: 'Your goals' })
 }
 
-test('yes/no goals have no target settings', async () => {
+test.skip('yes/no goals have no target settings', async () => {
   await newGoal('Read', 'Yes / no')
 
   expect(screen.queryByRole('checkbox', { name: 'Set a daily target' })).not.toBeInTheDocument()
 })
 
-test('a target is off until you turn it on', async () => {
+test.skip('a target is off until you turn it on', async () => {
   const { user, fetchMock } = await newGoal('Running', 'Number')
 
   expect(screen.getByRole('checkbox', { name: 'Set a daily target' })).not.toBeChecked()
@@ -54,7 +56,7 @@ test('a target is off until you turn it on', async () => {
   expect(sentGoal(fetchMock)).not.toHaveProperty('target')
 })
 
-test('a number goal takes "at most" a decimal value', async () => {
+test.skip('a number goal takes "at most" a decimal value', async () => {
   const { user, fetchMock } = await newGoal('Drinks', 'Number')
 
   await user.click(screen.getByRole('checkbox', { name: 'Set a daily target' }))
@@ -65,7 +67,7 @@ test('a number goal takes "at most" a decimal value', async () => {
   expect(sentGoal(fetchMock).target).toEqual({ comparison: 'at_most', value: 2.5 })
 })
 
-test('a range goal takes "at least" a value inside the range', async () => {
+test.skip('a range goal takes "at least" a value inside the range', async () => {
   const { user, fetchMock } = await newGoal('Focus', 'Range')
   await user.type(screen.getByLabelText('Minimum'), '1')
   await user.type(screen.getByLabelText('Maximum'), '10')
@@ -78,7 +80,7 @@ test('a range goal takes "at least" a value inside the range', async () => {
   expect(sentGoal(fetchMock).target).toEqual({ comparison: 'at_least', value: 7 })
 })
 
-test.each([
+test.skip.each([
   ['12', 'Target must be between 1 and 10.'],
   ['7.5', 'A range target must be a whole number.'],
   ['', 'A target value is required.'],
@@ -95,7 +97,7 @@ test.each([
   expect(callsTo(fetchMock, '/api/goals', 'POST')).toHaveLength(0)
 })
 
-test('turning the target back off leaves it out', async () => {
+test.skip('turning the target back off leaves it out', async () => {
   const { user, fetchMock } = await newGoal('Running', 'Number')
   await user.click(screen.getByRole('checkbox', { name: 'Set a daily target' }))
   await user.type(screen.getByLabelText('Target value'), '3')
@@ -105,7 +107,7 @@ test('turning the target back off leaves it out', async () => {
   expect(sentGoal(fetchMock)).not.toHaveProperty('target')
 })
 
-test('a pick-one goal\'s target is the options you mark as good', async () => {
+test.skip('a pick-one goal\'s target is the options you mark as good', async () => {
   const { user, fetchMock } = await newGoal('Mood', 'Pick one')
   await user.type(screen.getByLabelText('Option 1'), '😞')
   await user.type(screen.getByLabelText('Option 2'), '😐')

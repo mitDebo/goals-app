@@ -7,6 +7,8 @@ import { callsTo, stubApi } from '../helpers/fakeApi'
 
 // Spec: goals / "Enum settings"; change 03 task 4.3.
 
+// Parked for the prototype: new goals are yes/no only (spec/prototype.md). Re-enable with the other kinds.
+
 vi.mock('@/auth/supabase', async () => {
   const { fakeAuth } = await import('../helpers/fakeAuth')
   return { supabase: { auth: fakeAuth.auth } }
@@ -49,7 +51,7 @@ async function saveAndReturn(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole('heading', { name: 'Your goals' })
 }
 
-test('each option can have a note', async () => {
+test.skip('each option can have a note', async () => {
   const { user, fetchMock } = await pickOneForm('😞', '😀')
 
   await user.type(screen.getByLabelText('Note for option 1 (optional)'), 'bad day')
@@ -58,7 +60,7 @@ test('each option can have a note', async () => {
   expect(sentGoal(fetchMock).enum.options).toEqual([{ label: '😞', note: 'bad day' }, { label: '😀' }])
 })
 
-test('options can be marked as ranked from worst to best', async () => {
+test.skip('options can be marked as ranked from worst to best', async () => {
   const { user, fetchMock } = await pickOneForm('😞', '😐', '😀')
 
   await user.click(screen.getByRole('checkbox', { name: 'Ranked (first is worst, last is best)' }))
@@ -67,7 +69,7 @@ test('options can be marked as ranked from worst to best', async () => {
   expect(sentGoal(fetchMock).enum.ordered).toBe(true)
 })
 
-test('options move up and down with buttons, taking their notes with them', async () => {
+test.skip('options move up and down with buttons, taking their notes with them', async () => {
   const { user, fetchMock } = await pickOneForm('😐', '😞', '😀')
   await user.type(screen.getByLabelText('Note for option 2 (optional)'), 'bad day')
 
@@ -82,7 +84,7 @@ test('options move up and down with buttons, taking their notes with them', asyn
   expect(sentGoal(fetchMock).enum.options).toEqual([{ label: '😐' }, { label: '😀' }, { label: '😞', note: 'bad day' }])
 })
 
-test('the first option cannot move up and the last cannot move down', async () => {
+test.skip('the first option cannot move up and the last cannot move down', async () => {
   await pickOneForm('a', 'b', 'c')
 
   expect(screen.getByRole('button', { name: 'Move option 1 up' })).toBeDisabled()
@@ -90,7 +92,7 @@ test('the first option cannot move up and the last cannot move down', async () =
   expect(screen.getByRole('button', { name: 'Move option 2 up' })).toBeEnabled()
 })
 
-test('each option has a handle for dragging it into place', async () => {
+test.skip('each option has a handle for dragging it into place', async () => {
   await pickOneForm('a', 'b', 'c')
 
   for (const n of [1, 2, 3]) {
@@ -98,13 +100,13 @@ test('each option has a handle for dragging it into place', async () => {
   }
 })
 
-test('there are always at least two options', async () => {
+test.skip('there are always at least two options', async () => {
   await pickOneForm('a', 'b')
 
   expect(screen.queryByRole('button', { name: /Remove option/ })).not.toBeInTheDocument()
 })
 
-test('an option without a label is caught before anything is sent', async () => {
+test.skip('an option without a label is caught before anything is sent', async () => {
   const { user, fetchMock } = await pickOneForm('😞', '', '😀')
 
   await user.click(screen.getByRole('button', { name: 'Save' }))
@@ -113,7 +115,7 @@ test('an option without a label is caught before anything is sent', async () => 
   expect(callsTo(fetchMock, '/api/goals', 'POST')).toHaveLength(0)
 })
 
-test('two options with the same label are caught before anything is sent', async () => {
+test.skip('two options with the same label are caught before anything is sent', async () => {
   const { user, fetchMock } = await pickOneForm('😀', '😐', ' 😀 ')
 
   await user.click(screen.getByRole('button', { name: 'Save' }))
