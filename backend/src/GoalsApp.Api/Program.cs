@@ -18,6 +18,7 @@ app.MapHealthEndpoints();
 app.MapAuthEndpoints();
 app.MapProfileEndpoints();
 app.MapGoalEndpoints();
+app.MapPlanEndpoints();
 
 app.Run();
 

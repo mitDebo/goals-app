@@ -7,6 +7,9 @@ import { GoalsPage } from '@/pages/GoalsPage'
 import { EditGoalPage } from '@/pages/EditGoalPage'
 import { HomePage } from '@/pages/HomePage'
 import { NewGoalPage } from '@/pages/NewGoalPage'
+import { EditPlanPage } from '@/pages/EditPlanPage'
+import { NewPlanPage } from '@/pages/NewPlanPage'
+import { PlansPage } from '@/pages/PlansPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SignInPage } from '@/pages/SignInPage'
 
@@ -20,6 +23,9 @@ function Guarded() {
       <Route path="/goals" element={<GoalsPage session={session} />} />
       <Route path="/goals/new" element={<NewGoalPage session={session} />} />
       <Route path="/goals/:id/edit" element={<EditGoalPage session={session} />} />
+      <Route path="/plans" element={<PlansPage session={session} />} />
+      <Route path="/plans/new" element={<NewPlanPage session={session} />} />
+      <Route path="/plans/:id/edit" element={<EditPlanPage session={session} />} />
       <Route path="/settings" element={<SettingsPage session={session} />} />
       <Route path="*" element={<HomePage session={session} />} />
     </Routes>
