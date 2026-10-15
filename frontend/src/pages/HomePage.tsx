@@ -49,6 +49,9 @@ export function HomePage({ session }: { session: Session }) {
         </div>
       )}
       <p>Signed in{session.user.email ? ` as ${session.user.email}` : ''}.</p>
+      <Link to="/plans" className="underline">
+        Plans
+      </Link>
       <Link to="/goals" className="underline">
         Goals
       </Link>
