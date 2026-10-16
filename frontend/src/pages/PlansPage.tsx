@@ -32,9 +32,14 @@ export function PlansPage({ session }: { session: Session }) {
             <li key={plan.id} className="rounded-md border p-3">
               <div className="flex items-baseline justify-between gap-2">
                 <h3 className="font-medium">{plan.name}</h3>
-                <Link to={`/plans/${plan.id}/edit`} aria-label={`Edit ${plan.name}`} className="text-sm underline">
-                  Edit
-                </Link>
+                <span className="flex gap-3 text-sm">
+                  <Link to={`/plans/${plan.id}/start`} aria-label={`Start ${plan.name}`} className="underline">
+                    Start
+                  </Link>
+                  <Link to={`/plans/${plan.id}/edit`} aria-label={`Edit ${plan.name}`} className="underline">
+                    Edit
+                  </Link>
+                </span>
               </div>
               <p className="text-sm text-muted-foreground">{plan.lengthDays} days</p>
               <ul className="text-sm">

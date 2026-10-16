@@ -16,6 +16,17 @@ export type FakeGoal = {
   target?: { comparison: 'at_least' | 'at_most'; value: number }
 }
 
+// A run as GET /api/runs returns it.
+export type FakeRun = {
+  id: string
+  planId: string
+  planName: string
+  startDate: string
+  endDate: string
+  goals: { goalId: string; goalName: string; days?: number[]; times?: number }[]
+  achievements: { goalId: string; date: string }[]
+}
+
 type Options = {
   // The profile the backend already has for this user (null = none yet).
   profile?: FakeProfile | null
@@ -29,6 +40,11 @@ type Options = {
   failGoals?: boolean
   // Make POST /api/goals and PUT /api/goals/{id} fail with this validation error.
   rejectGoalWith?: { field: string; message: string }
+  // The runs GET /api/runs returns, and the user's "today" that comes with them.
+  runs?: FakeRun[]
+  today?: string
+  // Make ticking and unticking fail as if the server broke (500).
+  failTicks?: boolean
 }
 
 // A pretend backend: answers /api/hello and /api/me like the real one would,
@@ -40,6 +56,9 @@ export function stubApi({
   goals = [],
   failGoals,
   rejectGoalWith,
+  runs = [],
+  today = '2026-09-29',
+  failTicks,
 }: Options = {}) {
   let current: FakeProfile | null = profile
   const savedGoals = [...goals]
@@ -53,6 +72,12 @@ export function stubApi({
 
     if (url === '/api/me' && method === 'GET') {
       return current ? Response.json(withToday(current)) : new Response(null, { status: 404 })
+    }
+
+    if (url === '/api/runs' && method === 'GET') return Response.json({ today, runs })
+
+    if (/^\/api\/runs\/[^/]+\/achievements\/[^/]+\/[^/]+$/.test(url)) {
+      return new Response(null, { status: failTicks ? 500 : 204 })
     }
 
     if (url === '/api/goals' && method === 'GET') {

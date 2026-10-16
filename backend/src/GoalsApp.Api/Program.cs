@@ -19,6 +19,7 @@ app.MapAuthEndpoints();
 app.MapProfileEndpoints();
 app.MapGoalEndpoints();
 app.MapPlanEndpoints();
+app.MapRunEndpoints();
 
 app.Run();
 
