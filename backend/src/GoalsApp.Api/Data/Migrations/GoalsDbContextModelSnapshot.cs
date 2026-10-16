@@ -24,6 +24,34 @@ namespace GoalsApp.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("GoalsApp.Api.Data.Entities.Achievement", b =>
+                {
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("run_id");
+
+                    b.Property<Guid>("GoalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("goal_id");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("RunId", "GoalId", "Date");
+
+                    b.HasIndex("GoalId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_achievements_user_id");
+
+                    b.ToTable("achievements", "goals");
+                });
+
             modelBuilder.Entity("GoalsApp.Api.Data.Entities.Goal", b =>
                 {
                     b.Property<Guid>("Id")
@@ -282,6 +310,64 @@ namespace GoalsApp.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("GoalsApp.Api.Data.Entities.Run", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("end_date");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("plan_id");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date")
+                        .HasColumnName("start_date");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_runs_user_id");
+
+                    b.ToTable("runs", "goals", t =>
+                        {
+                            t.HasCheckConstraint("ck_runs_dates", "end_date >= start_date");
+                        });
+                });
+
+            modelBuilder.Entity("GoalsApp.Api.Data.Entities.Achievement", b =>
+                {
+                    b.HasOne("GoalsApp.Api.Data.Entities.Goal", null)
+                        .WithMany()
+                        .HasForeignKey("GoalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("GoalsApp.Api.Data.Entities.Run", null)
+                        .WithMany("Achievements")
+                        .HasForeignKey("RunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("GoalsApp.Api.Data.Entities.GoalEnumOption", b =>
                 {
                     b.HasOne("GoalsApp.Api.Data.Entities.Goal", null)
@@ -308,6 +394,17 @@ namespace GoalsApp.Api.Data.Migrations
                     b.Navigation("Goal");
                 });
 
+            modelBuilder.Entity("GoalsApp.Api.Data.Entities.Run", b =>
+                {
+                    b.HasOne("GoalsApp.Api.Data.Entities.Plan", "Plan")
+                        .WithMany()
+                        .HasForeignKey("PlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Plan");
+                });
+
             modelBuilder.Entity("GoalsApp.Api.Data.Entities.Goal", b =>
                 {
                     b.Navigation("Options");
@@ -316,6 +413,11 @@ namespace GoalsApp.Api.Data.Migrations
             modelBuilder.Entity("GoalsApp.Api.Data.Entities.Plan", b =>
                 {
                     b.Navigation("Goals");
+                });
+
+            modelBuilder.Entity("GoalsApp.Api.Data.Entities.Run", b =>
+                {
+                    b.Navigation("Achievements");
                 });
 #pragma warning restore 612, 618
         }
