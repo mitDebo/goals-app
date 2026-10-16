@@ -17,6 +17,8 @@ public sealed class RunRepository(GoalsDbContext db) : IRunRepository
 
     public void Add(Run run) => db.Runs.Add(run);
 
+    public void Remove(Run run) => db.Runs.Remove(run);
+
     public void RemoveAchievement(Achievement achievement) => db.Achievements.Remove(achievement);
 
     public Task SaveChangesAsync(CancellationToken ct) => db.SaveChangesAsync(ct);

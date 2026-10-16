@@ -62,6 +62,7 @@ export function stubApi({
 }: Options = {}) {
   let current: FakeProfile | null = profile
   const savedGoals = [...goals]
+  let savedRuns = [...runs]
   const withToday = (p: FakeProfile) => ({ ...p, today: '2026-09-29' })
 
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -74,7 +75,24 @@ export function stubApi({
       return current ? Response.json(withToday(current)) : new Response(null, { status: 404 })
     }
 
-    if (url === '/api/runs' && method === 'GET') return Response.json({ today, runs })
+    if (url === '/api/runs' && method === 'GET') return Response.json({ today, runs: savedRuns })
+
+    const runPath = url.match(/^\/api\/runs\/([^/]+)$/)
+    if (runPath) {
+      const run = savedRuns.find((r) => r.id === runPath[1])
+      if (!run) return new Response(null, { status: 404 })
+      if (method === 'DELETE') {
+        savedRuns = savedRuns.filter((r) => r !== run)
+        return new Response(null, { status: 204 })
+      }
+      if (method === 'PATCH') {
+        const { endDate } = JSON.parse(String(init?.body)) as { endDate: string }
+        if (endDate < run.startDate) return validationProblem('endDate', "The end date can't be before the start date.")
+        const changed = { ...run, endDate, achievements: run.achievements.filter((a) => a.date <= endDate) }
+        savedRuns = savedRuns.map((r) => (r === run ? changed : r))
+        return Response.json(changed)
+      }
+    }
 
     if (/^\/api\/runs\/[^/]+\/achievements\/[^/]+\/[^/]+$/.test(url)) {
       return new Response(null, { status: failTicks ? 500 : 204 })

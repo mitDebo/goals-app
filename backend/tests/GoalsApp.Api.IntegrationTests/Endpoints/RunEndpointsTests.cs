@@ -146,4 +146,44 @@ public class RunEndpointsTests : IClassFixture<GoalsApiFactory>
             Json($$"""{ "planId": "{{plan}}", "startDate": "2026-03-05" }"""), Ct);
         Assert.Equal(HttpStatusCode.BadRequest, strangersPlanStart.StatusCode);
     }
+
+    [Fact]
+    public async Task Moving_the_end_date_in_hides_later_ticks_and_moving_it_out_brings_them_back()
+    {
+        var client = await SignedInClient();
+        var read = await CreateGoal(client, "Read");
+        var plan = await CreatePlan(client, $$"""{ "goalId": "{{read}}", "times": 3 }""");
+        var run = await StartRun(client, plan, "2026-03-03");
+        await Tick(client, run, read, "2026-03-04");
+        await Tick(client, run, read, "2026-03-08");
+
+        var end = (string date) => client.PatchAsync($"/api/runs/{run}", Json($$"""{ "endDate": "{{date}}" }"""), Ct);
+
+        Assert.Equal(HttpStatusCode.OK, (await end("2026-03-05")).StatusCode);
+        var shortened = await OnlyRun(client);
+        Assert.Equal("2026-03-05", shortened.GetProperty("endDate").GetString());
+        Assert.Equal(["2026-03-04"], TickedDates(shortened, read));
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await end("2026-03-02")).StatusCode);
+
+        await end("2026-03-31");
+        Assert.Equal(["2026-03-04", "2026-03-08"], TickedDates(await OnlyRun(client), read));
+    }
+
+    [Fact]
+    public async Task Deleting_a_run_leaves_its_plan_alone()
+    {
+        var client = await SignedInClient();
+        var read = await CreateGoal(client, "Read");
+        var plan = await CreatePlan(client, $$"""{ "goalId": "{{read}}", "times": 1 }""");
+        var run = await StartRun(client, plan, "2026-03-05");
+        await Tick(client, run, read, "2026-03-05");
+
+        Assert.Equal(HttpStatusCode.NotFound, (await (await SignedInClient()).DeleteAsync($"/api/runs/{run}", Ct)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/runs/{run}", Ct)).StatusCode);
+
+        var list = await Body(await client.GetAsync("/api/runs", Ct));
+        Assert.Empty(list.GetProperty("runs").EnumerateArray());
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/api/plans/{plan}", Ct)).StatusCode);
+    }
 }

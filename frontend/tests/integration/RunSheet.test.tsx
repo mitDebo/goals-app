@@ -83,3 +83,30 @@ test('if the server refuses a tick, the box goes back and says so', async () => 
   expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't save that tick.")
   await waitFor(() => expect(screen.getByRole('button', { name: 'Gym, Mar 2: done' })).toBeInTheDocument())
 })
+
+test('deleting a run asks first, then removes its sheet', async () => {
+  const fetchMock = start()
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Delete run' }))
+  expect(callsTo(fetchMock, '/api/runs/run-1', 'DELETE')).toHaveLength(0)
+  await userEvent.click(screen.getByRole('button', { name: 'Yes, delete it' }))
+
+  expect(await screen.findByText(/Nothing running right now/)).toBeInTheDocument()
+  expect(callsTo(fetchMock, '/api/runs/run-1', 'DELETE')).toHaveLength(1)
+})
+
+test('ending a run early moves it to past runs', async () => {
+  start()
+
+  await userEvent.click(await screen.findByRole('button', { name: 'Change end date' }))
+  const input = screen.getByLabelText('New end date')
+  await userEvent.clear(input)
+  await userEvent.type(input, '2026-03-02')
+  await userEvent.click(screen.getByRole('button', { name: 'Save end date' }))
+
+  expect(await screen.findByText(/Nothing running right now/)).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('link', { name: 'Past runs' }))
+  expect(await screen.findByRole('region', { name: 'Work week' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Mar 3/ })).not.toBeInTheDocument()
+})
