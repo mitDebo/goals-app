@@ -2,6 +2,7 @@ import type { Run } from '@/runs/api'
 import { addDays, daysBetween, shortDate } from '@/runs/dates'
 import { cellKind, cellLabel, type CellKind } from '@/runs/sheet'
 import { describeFrequency } from '@/plans/api'
+import { RunActions } from '@/runs/RunActions'
 
 // What each kind of box looks like. Ticked boxes are filled; bonus ticks get a dashed outline.
 const cellStyle: Record<CellKind, string> = {
@@ -17,10 +18,12 @@ type Props = {
   run: Run
   today: string
   onToggle: (goalId: string, date: string, done: boolean) => void
+  onChangeEnd: (endDate: string) => Promise<string[]>
+  onDelete: () => Promise<boolean>
 }
 
 // One run as a grid: goals down the side, the run's days across the top. Tap a box to tick or untick it.
-export function RunSheet({ run, today, onToggle }: Props) {
+export function RunSheet({ run, today, onToggle, onChangeEnd, onDelete }: Props) {
   const length = daysBetween(run.startDate, run.endDate) + 1
   const dates = Array.from({ length }, (_, i) => addDays(run.startDate, i))
   const ticked = new Set(run.achievements.map((a) => `${a.goalId}|${a.date}`))
@@ -92,6 +95,7 @@ export function RunSheet({ run, today, onToggle }: Props) {
           </table>
         </div>
       )}
+      <RunActions runName={run.planName} endDate={run.endDate} onChangeEnd={onChangeEnd} onDelete={onDelete} />
     </section>
   )
 }

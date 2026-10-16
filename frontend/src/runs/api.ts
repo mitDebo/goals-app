@@ -52,3 +52,29 @@ export async function setAchieved(token: string, runId: string, goalId: string, 
     return false
   }
 }
+
+export type ChangeEndResult = { ok: true; run: Run } | { ok: false; errors: string[] }
+
+export async function changeRunEnd(token: string, runId: string, endDate: string): Promise<ChangeEndResult> {
+  try {
+    const res = await apiFetch(`/api/runs/${encodeURIComponent(runId)}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify({ endDate }),
+    })
+    if (res.ok) return { ok: true, run: (await res.json()) as Run }
+    const errors = Object.values(await readFieldErrors(res)).flat()
+    return { ok: false, errors: errors.length ? errors : ["Couldn't change the end date."] }
+  } catch {
+    return { ok: false, errors: ["Couldn't reach the server. Try again."] }
+  }
+}
+
+// Deletes the run and all its ticks. Resolves to whether it worked.
+export async function deleteRun(token: string, runId: string) {
+  try {
+    const res = await apiFetch(`/api/runs/${encodeURIComponent(runId)}`, token, { method: 'DELETE' })
+    return res.ok
+  } catch {
+    return false
+  }
+}

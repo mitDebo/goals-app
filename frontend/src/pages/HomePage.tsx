@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/auth/supabase'
 import { browserTimeZone, ensureProfile, updateProfile } from '@/profile/api'
-import { ActiveRuns } from '@/runs/ActiveRuns'
+import { RunList } from '@/runs/RunList'
 
 // Inside the app. On arrival, make sure our backend has a profile for this
 // person, and offer to fix it if their browser is now in another time zone.
@@ -51,8 +51,11 @@ export function HomePage({ session }: { session: Session }) {
           </div>
         </div>
       )}
-      {profileReady && <ActiveRuns token={session.access_token} />}
+      {profileReady && <RunList token={session.access_token} which="active" />}
       <p>Signed in{session.user.email ? ` as ${session.user.email}` : ''}.</p>
+      <Link to="/runs/past" className="underline">
+        Past runs
+      </Link>
       <Link to="/plans" className="underline">
         Plans
       </Link>
