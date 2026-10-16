@@ -11,6 +11,7 @@ public interface IRunRepository
     Task<Run?> FindAsync(Guid id, CancellationToken ct);
 
     void Add(Run run);
+    void Remove(Run run);
     void RemoveAchievement(Achievement achievement);
     Task SaveChangesAsync(CancellationToken ct);
 }

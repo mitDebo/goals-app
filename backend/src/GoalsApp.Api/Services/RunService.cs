@@ -26,16 +26,48 @@ public sealed class RunService(IRunRepository runs, IPlanRepository plans, IProf
             return Outcome<Run>.Invalid("startDate", "Choose a start date.");
 
         var end = endDate ?? start.AddDays(plan.LengthDays - 1);
-        if (end < start)
-            return Outcome<Run>.Invalid("endDate", "The end date can't be before the start date.");
-        if (end.DayNumber - start.DayNumber + 1 > MaxRunDays)
-            return Outcome<Run>.Invalid("endDate", $"A run can be at most {MaxRunDays} days long.");
+        if (CheckEnd(start, end) is { } problem)
+            return Outcome<Run>.Invalid("endDate", problem);
 
         var run = new Run { Id = Guid.CreateVersion7(), PlanId = plan.Id, Plan = plan, StartDate = start, EndDate = end };
         runs.Add(run);
         await runs.SaveChangesAsync(ct);
         return run;
     }
+
+    // Only the end date can change. Ticks after a new, earlier end date are kept (just not shown),
+    // so moving the end date back out brings them back.
+    public async Task<Outcome<Run>> ChangeEndAsync(Guid id, DateOnly? endDate, CancellationToken ct)
+    {
+        var run = await runs.FindAsync(id, ct);
+        if (run is null)
+            return Outcome<Run>.NotFound();
+        if (endDate is not { } end)
+            return Outcome<Run>.Invalid("endDate", "Choose an end date.");
+        if (CheckEnd(run.StartDate, end) is { } problem)
+            return Outcome<Run>.Invalid("endDate", problem);
+
+        run.EndDate = end;
+        await runs.SaveChangesAsync(ct);
+        return run;
+    }
+
+    // Deletes the run and all its ticks. The plan is untouched.
+    public async Task<Outcome<Run>> DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var run = await runs.FindAsync(id, ct);
+        if (run is null)
+            return Outcome<Run>.NotFound();
+
+        runs.Remove(run);
+        await runs.SaveChangesAsync(ct);
+        return run;
+    }
+
+    private static string? CheckEnd(DateOnly start, DateOnly end) =>
+        end < start ? "The end date can't be before the start date."
+        : end.DayNumber - start.DayNumber + 1 > MaxRunDays ? $"A run can be at most {MaxRunDays} days long."
+        : null;
 
     // Idempotent: ticking an already-ticked day changes nothing. Any day from the run's start up to
     // today can be ticked, due or not (a tick on a day that isn't due shows as a bonus).
