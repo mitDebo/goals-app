@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/auth/supabase'
 import { browserTimeZone, ensureProfile, updateProfile } from '@/profile/api'
+import { ActiveRuns } from '@/runs/ActiveRuns'
 
 // Inside the app. On arrival, make sure our backend has a profile for this
 // person, and offer to fix it if their browser is now in another time zone.
@@ -11,6 +12,7 @@ export function HomePage({ session }: { session: Session }) {
   const profileEnsuredFor = useRef<string | null>(null)
   const [savedTimeZone, setSavedTimeZone] = useState<string | null>(null)
   const [profileFailed, setProfileFailed] = useState(false)
+  const [profileReady, setProfileReady] = useState(false)
   const browserZone = browserTimeZone()
 
   useEffect(() => {
@@ -18,8 +20,9 @@ export function HomePage({ session }: { session: Session }) {
     profileEnsuredFor.current = session.access_token
 
     ensureProfile(session.access_token).then((profile) => {
-      if (!profile) setProfileFailed(true)
-      else if (profile.timeZone !== browserZone) setSavedTimeZone(profile.timeZone)
+      if (!profile) return setProfileFailed(true)
+      setProfileReady(true)
+      if (profile.timeZone !== browserZone) setSavedTimeZone(profile.timeZone)
     })
   }, [session.access_token, browserZone])
 
@@ -48,6 +51,7 @@ export function HomePage({ session }: { session: Session }) {
           </div>
         </div>
       )}
+      {profileReady && <ActiveRuns token={session.access_token} />}
       <p>Signed in{session.user.email ? ` as ${session.user.email}` : ''}.</p>
       <Link to="/plans" className="underline">
         Plans
