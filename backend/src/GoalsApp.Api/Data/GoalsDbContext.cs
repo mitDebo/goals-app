@@ -21,6 +21,8 @@ public class GoalsDbContext(DbContextOptions<GoalsDbContext> options, ICurrentUs
     public DbSet<GoalEnumOption> GoalEnumOptions => Set<GoalEnumOption>();
     public DbSet<Plan> Plans => Set<Plan>();
     public DbSet<PlanGoal> PlanGoals => Set<PlanGoal>();
+    public DbSet<Run> Runs => Set<Run>();
+    public DbSet<Achievement> Achievements => Set<Achievement>();
 
     // Read by the owner query filter each time a query runs.
     private Guid? CurrentUserId => currentUser.UserId;
