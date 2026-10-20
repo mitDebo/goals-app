@@ -47,7 +47,7 @@ const start = (options: Parameters<typeof stubApi>[0] = {}) => {
 const box = (name: string) => screen.findByRole('button', { name })
 
 beforeEach(() => {
-  window.history.replaceState({}, '', '/')
+  window.history.replaceState({}, '', '/runs')
   fakeAuth.reset(aSession())
 })
 
@@ -106,6 +106,7 @@ test('ending a run early moves it to past runs', async () => {
 
   expect(await screen.findByText(/Nothing running right now/)).toBeInTheDocument()
 
+  await userEvent.click(screen.getByRole('button', { name: 'Account menu' }))
   await userEvent.click(screen.getByRole('link', { name: 'Past runs' }))
   expect(await screen.findByRole('region', { name: 'Work week' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Mar 3/ })).not.toBeInTheDocument()

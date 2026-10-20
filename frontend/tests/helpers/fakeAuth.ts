@@ -2,7 +2,10 @@ import { vi } from 'vitest'
 
 // A pretend Supabase auth client. Tests decide whether someone is signed in,
 // and can sign in or out at any moment to see how the app reacts.
-export type FakeSession = { access_token: string; user: { id: string; email?: string } }
+export type FakeSession = {
+  access_token: string
+  user: { id: string; email?: string; user_metadata?: Record<string, unknown> }
+}
 type Listener = (event: string, session: FakeSession | null) => void
 
 let session: FakeSession | null = null
@@ -40,7 +43,8 @@ export const fakeAuth = {
   },
 }
 
-export const aSession = (accessToken = 'test-token'): FakeSession => ({
+// userMetadata: what the sign-in provider told Supabase (e.g. { avatar_url } from Google).
+export const aSession = (accessToken = 'test-token', userMetadata: Record<string, unknown> = {}): FakeSession => ({
   access_token: accessToken,
-  user: { id: '11111111-1111-1111-1111-111111111111', email: 'kdubs@example.com' },
+  user: { id: '11111111-1111-1111-1111-111111111111', email: 'kdubs@example.com', user_metadata: userMetadata },
 })

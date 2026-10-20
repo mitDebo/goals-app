@@ -1,18 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
 import type { Session } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
-import { supabase } from '@/auth/supabase'
 import { browserTimeZone, ensureProfile, updateProfile } from '@/profile/api'
-import { RunList } from '@/runs/RunList'
 
 // Inside the app. On arrival, make sure our backend has a profile for this
 // person, and offer to fix it if their browser is now in another time zone.
+// The page itself is a placeholder until the week table arrives.
 export function HomePage({ session }: { session: Session }) {
   const profileEnsuredFor = useRef<string | null>(null)
   const [savedTimeZone, setSavedTimeZone] = useState<string | null>(null)
   const [profileFailed, setProfileFailed] = useState(false)
-  const [profileReady, setProfileReady] = useState(false)
   const browserZone = browserTimeZone()
 
   useEffect(() => {
@@ -20,9 +17,8 @@ export function HomePage({ session }: { session: Session }) {
     profileEnsuredFor.current = session.access_token
 
     ensureProfile(session.access_token).then((profile) => {
-      if (!profile) return setProfileFailed(true)
-      setProfileReady(true)
-      if (profile.timeZone !== browserZone) setSavedTimeZone(profile.timeZone)
+      if (!profile) setProfileFailed(true)
+      else if (profile.timeZone !== browserZone) setSavedTimeZone(profile.timeZone)
     })
   }, [session.access_token, browserZone])
 
@@ -51,23 +47,7 @@ export function HomePage({ session }: { session: Session }) {
           </div>
         </div>
       )}
-      {profileReady && <RunList token={session.access_token} which="active" />}
-      <p>Signed in{session.user.email ? ` as ${session.user.email}` : ''}.</p>
-      <Link to="/runs/past" className="underline">
-        Past runs
-      </Link>
-      <Link to="/plans" className="underline">
-        Plans
-      </Link>
-      <Link to="/goals" className="underline">
-        Goals
-      </Link>
-      <Link to="/settings" className="underline">
-        Settings
-      </Link>
-      <Button variant="outline" onClick={() => supabase.auth.signOut()}>
-        Sign out
-      </Button>
+      <p>Logged In</p>
     </section>
   )
 }

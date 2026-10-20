@@ -16,7 +16,7 @@ const callbackUrl = `${window.location.origin}/auth/callback`
 
 beforeEach(() => {
   fakeAuth.reset(null)
-  window.history.replaceState({}, '', '/')
+  window.history.replaceState({}, '', '/sign-in')
   stubApi()
 })
 

@@ -31,6 +31,6 @@ test('no error when the profile is set up fine', async () => {
   stubApi()
   render(<App />)
 
-  await screen.findByRole('button', { name: 'Sign out' })
+  await screen.findByText('Logged In')
   expect(screen.queryByText(/couldn't load your profile/i)).not.toBeInTheDocument()
 })

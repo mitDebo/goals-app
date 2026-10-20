@@ -40,13 +40,14 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-test('the home page links to your goals', async () => {
+test('the account menu links to your goals', async () => {
   const user = userEvent.setup()
   stubApi({ goals: [read] })
   window.history.replaceState({}, '', '/')
   render(<App />)
 
-  await user.click(await screen.findByRole('link', { name: 'Goals' }))
+  await user.click(await screen.findByRole('button', { name: 'Account menu' }))
+  await user.click(within(screen.getByRole('navigation', { name: 'Account' })).getByRole('link', { name: 'Goals' }))
 
   expect(window.location.pathname).toBe('/goals')
   expect(await screen.findByRole('heading', { name: 'Your goals' })).toBeInTheDocument()

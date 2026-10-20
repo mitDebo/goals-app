@@ -37,7 +37,7 @@ test('coming back from sign-in creates the profile with the browser time zone an
   expect(init?.method).toBe('POST')
   expect(JSON.parse(String(init?.body))).toEqual({ timeZone: browserTimeZone })
 
-  expect(await screen.findByRole('button', { name: 'Sign out' })).toBeInTheDocument()
+  expect(await screen.findByText('Logged In')).toBeInTheDocument()
   expect(window.location.pathname).toBe('/')
 })
 
@@ -50,13 +50,14 @@ test('calls to our API carry the sign-in token', async () => {
   expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer my-token')
 })
 
-test('signing out returns to the sign-in screen', async () => {
+test('signing out from the account menu returns to the logged-out page', async () => {
   const user = userEvent.setup()
   fakeAuth.reset(aSession())
   render(<App />)
 
-  await user.click(await screen.findByRole('button', { name: 'Sign out' }))
+  await user.click(await screen.findByRole('button', { name: 'Account menu' }))
+  await user.click(screen.getByRole('button', { name: 'Sign out' }))
 
   expect(fakeAuth.auth.signOut).toHaveBeenCalled()
-  expect(await screen.findByRole('button', { name: 'Continue with Google' })).toBeInTheDocument()
+  expect(await screen.findByText('Logged out')).toBeInTheDocument()
 })

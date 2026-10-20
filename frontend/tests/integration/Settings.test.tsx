@@ -23,13 +23,14 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-test('the home page links to settings', async () => {
+test('the account menu links to settings', async () => {
   const user = userEvent.setup()
   stubApi({ profile: { timeZone: browserTimeZone, weekStart: 'sunday' } })
   window.history.replaceState({}, '', '/')
   render(<App />)
 
-  await user.click(await screen.findByRole('link', { name: 'Settings' }))
+  await user.click(await screen.findByRole('button', { name: 'Account menu' }))
+  await user.click(screen.getByRole('link', { name: 'Settings' }))
 
   expect(window.location.pathname).toBe('/settings')
   expect(await screen.findByLabelText('Time zone')).toBeInTheDocument()

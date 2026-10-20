@@ -29,7 +29,7 @@ test('no prompt when the browser and profile time zones match', async () => {
   stubApi({ profile: { timeZone: browserTimeZone, weekStart: 'sunday' } })
   render(<App />)
 
-  await screen.findByRole('button', { name: 'Sign out' })
+  await screen.findByText('Logged In')
   await waitFor(() => expect(screen.queryByText(/your browser says/i)).not.toBeInTheDocument())
 })
 
