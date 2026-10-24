@@ -3,6 +3,21 @@ import { Link } from 'react-router'
 import type { Session } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { getProfile, updateProfile, type WeekStart } from '@/profile/api'
+import {
+  dateFormats,
+  formatDate,
+  formatShortDate,
+  saveDateFormat,
+  savedDateFormat,
+  saveShortDateFormat,
+  savedShortDateFormat,
+  shortDateFormats,
+  type DateFormatId,
+  type ShortDateFormatId,
+} from '@/settings/dateFormat'
+
+// Each date format is shown as an example, using today's date.
+const exampleDay = new Date().toISOString().slice(0, 10)
 
 const selectClass = 'rounded-md border bg-background px-2 py-1'
 
@@ -11,6 +26,8 @@ type Status = { kind: 'idle' } | { kind: 'saved' } | { kind: 'error'; messages: 
 export function SettingsPage({ session }: { session: Session }) {
   const [timeZone, setTimeZone] = useState<string | null>(null)
   const [weekStart, setWeekStart] = useState<WeekStart>('sunday')
+  const [dateFormat, setDateFormat] = useState<DateFormatId>(savedDateFormat)
+  const [shortDateFormat, setShortDateFormat] = useState<ShortDateFormatId>(savedShortDateFormat)
   const [loadFailed, setLoadFailed] = useState(false)
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
 
@@ -30,6 +47,8 @@ export function SettingsPage({ session }: { session: Session }) {
 
   const save = async () => {
     if (!timeZone) return
+    saveDateFormat(dateFormat)
+    saveShortDateFormat(shortDateFormat)
     const result = await updateProfile(session.access_token, { timeZone, weekStart })
     setStatus(result.ok ? { kind: 'saved' } : { kind: 'error', messages: result.errors })
   }
@@ -71,6 +90,42 @@ export function SettingsPage({ session }: { session: Session }) {
         >
           <option value="sunday">Sunday</option>
           <option value="monday">Monday</option>
+        </select>
+      </label>
+
+      <label className="flex flex-col gap-1">
+        Date format
+        <select
+          className={selectClass}
+          value={dateFormat}
+          onChange={(e) => {
+            setDateFormat(e.target.value as DateFormatId)
+            setStatus({ kind: 'idle' })
+          }}
+        >
+          {dateFormats.map((format) => (
+            <option key={format.id} value={format.id}>
+              {formatDate(exampleDay, format.id)}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="flex flex-col gap-1">
+        Short date format (the dates over each day)
+        <select
+          className={selectClass}
+          value={shortDateFormat}
+          onChange={(e) => {
+            setShortDateFormat(e.target.value as ShortDateFormatId)
+            setStatus({ kind: 'idle' })
+          }}
+        >
+          {shortDateFormats.map((format) => (
+            <option key={format.id} value={format.id}>
+              {formatShortDate(exampleDay, format.id)}
+            </option>
+          ))}
         </select>
       </label>
 

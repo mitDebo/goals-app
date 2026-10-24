@@ -1,7 +1,6 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import { BrowserRouter, Route, Routes } from 'react-router'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { useAuth } from '@/auth/context'
-import { ApiStatus } from '@/components/ApiStatus'
 import { Header } from '@/components/Header'
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage'
 import { CurrentRunsPage } from '@/pages/CurrentRunsPage'
@@ -15,7 +14,6 @@ import { NewPlanPage } from '@/pages/NewPlanPage'
 import { PastRunsPage } from '@/pages/PastRunsPage'
 import { PlansPage } from '@/pages/PlansPage'
 import { SettingsPage } from '@/pages/SettingsPage'
-import { SignInPage } from '@/pages/SignInPage'
 import { StartRunPage } from '@/pages/StartRunPage'
 
 // Signed in: the app. Signed out: the placeholder front page, whatever the address.
@@ -40,25 +38,16 @@ function Guarded() {
   )
 }
 
-// The sign-in options. Already signed in? Straight home.
-function SignInRoute() {
-  const { session, loading } = useAuth()
-  if (loading) return <p>Loading…</p>
-  return session ? <Navigate to="/" replace /> : <SignInPage />
-}
-
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Header />
-        <main className="p-6 text-lg">
+        <main className="p-3 text-lg sm:p-6">
           <Routes>
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
-            <Route path="/sign-in" element={<SignInRoute />} />
             <Route path="*" element={<Guarded />} />
           </Routes>
-          <ApiStatus />
         </main>
       </BrowserRouter>
     </AuthProvider>
