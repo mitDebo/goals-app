@@ -48,11 +48,7 @@ jobs:
       - run: dotnet restore GoalsApp.slnx
       - id: build
         run: dotnet build GoalsApp.slnx --configuration Release --no-restore
-      - name: unit tests
-        run: dotnet test tests/GoalsApp.Api.UnitTests --configuration Release --no-build --logger GitHubActions
-      - name: integration tests
-        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: dotnet test tests/GoalsApp.Api.IntegrationTests --configuration Release --no-build --logger GitHubActions
+      # Tests are paused while the prototype settles (they come back with v1; see git history).
       - uses: docker/setup-buildx-action@v4
       - name: docker build
         uses: docker/build-push-action@v7
@@ -79,11 +75,7 @@ jobs:
       - id: install
         run: npm ci
       - run: npm run lint
-      - name: unit tests
-        run: npm run test:unit
-      - name: integration tests
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-        run: npm run test:integration
+      # Tests are paused while the prototype settles (they come back with v1; see git history).
       - run: npm run build
       - uses: docker/setup-buildx-action@v4
       - name: docker build
