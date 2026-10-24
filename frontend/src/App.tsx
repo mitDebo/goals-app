@@ -1,27 +1,30 @@
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { useAuth } from '@/auth/context'
-import { ApiStatus } from '@/components/ApiStatus'
+import { Header } from '@/components/Header'
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage'
-import { GoalsPage } from '@/pages/GoalsPage'
+import { CurrentRunsPage } from '@/pages/CurrentRunsPage'
 import { EditGoalPage } from '@/pages/EditGoalPage'
-import { HomePage } from '@/pages/HomePage'
-import { NewGoalPage } from '@/pages/NewGoalPage'
 import { EditPlanPage } from '@/pages/EditPlanPage'
+import { GoalsPage } from '@/pages/GoalsPage'
+import { HomePage } from '@/pages/HomePage'
+import { LoggedOutPage } from '@/pages/LoggedOutPage'
+import { NewGoalPage } from '@/pages/NewGoalPage'
 import { NewPlanPage } from '@/pages/NewPlanPage'
 import { PastRunsPage } from '@/pages/PastRunsPage'
 import { PlansPage } from '@/pages/PlansPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { StartRunPage } from '@/pages/StartRunPage'
-import { SignInPage } from '@/pages/SignInPage'
 
-// Signed in: the app. Signed out: the front door.
+// Signed in: the app. Signed out: the placeholder front page, whatever the address.
 function Guarded() {
   const { session, loading } = useAuth()
   if (loading) return <p>Loading…</p>
-  if (!session) return <SignInPage />
+  if (!session) return <LoggedOutPage />
   return (
     <Routes>
+      <Route path="/runs" element={<CurrentRunsPage session={session} />} />
+      <Route path="/runs/past" element={<PastRunsPage session={session} />} />
       <Route path="/goals" element={<GoalsPage session={session} />} />
       <Route path="/goals/new" element={<NewGoalPage session={session} />} />
       <Route path="/goals/:id/edit" element={<EditGoalPage session={session} />} />
@@ -29,7 +32,6 @@ function Guarded() {
       <Route path="/plans/new" element={<NewPlanPage session={session} />} />
       <Route path="/plans/:id/edit" element={<EditPlanPage session={session} />} />
       <Route path="/plans/:id/start" element={<StartRunPage session={session} />} />
-      <Route path="/runs/past" element={<PastRunsPage session={session} />} />
       <Route path="/settings" element={<SettingsPage session={session} />} />
       <Route path="*" element={<HomePage session={session} />} />
     </Routes>
@@ -40,14 +42,12 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <main className="p-6 text-lg">
-          <h1 className="text-3xl font-bold">Goals</h1>
-          <p className="mb-6 text-muted-foreground">Your week, one box at a time.</p>
+        <Header />
+        <main className="p-3 text-lg sm:p-6">
           <Routes>
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="*" element={<Guarded />} />
           </Routes>
-          <ApiStatus />
         </main>
       </BrowserRouter>
     </AuthProvider>

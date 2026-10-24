@@ -15,3 +15,7 @@ export const daysBetween = (a: string, b: string) => Math.round((toUtc(b) - toUt
 // "Mar 5"
 export const shortDate = (iso: string) =>
   new Date(toUtc(iso)).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
+
+// 0 = Sunday … 6 = Saturday.
+export const weekdayOf = (iso: string) => new Date(toUtc(iso)).getUTCDay()
+
